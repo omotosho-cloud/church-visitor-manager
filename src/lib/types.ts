@@ -25,6 +25,7 @@ export interface Template {
 export interface MessageQueueItem {
   id?: string;
   visitor_id: string;
+  visitor_name?: string;
   template_id: string;
   phone: string;
   message: string;

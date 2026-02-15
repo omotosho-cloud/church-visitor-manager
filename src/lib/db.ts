@@ -123,11 +123,14 @@ export const createMessageLog = async (log: Omit<SmsLog, 'id' | 'sent_at'>) => {
 export const getQueuedMessages = async () => {
   const { data, error } = await supabase
     .from('message_queue')
-    .select('*')
+    .select('*, visitors(name)')
     .eq('status', 'pending')
     .order('scheduled_for', { ascending: true });
   if (error) throw error;
-  return data as MessageQueueItem[];
+  return data.map(item => ({
+    ...item,
+    visitor_name: item.visitors?.name
+  })) as MessageQueueItem[];
 };
 
 export const createQueuedMessage = async (item: Omit<MessageQueueItem, 'id' | 'created_at'>) => {

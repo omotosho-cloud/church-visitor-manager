@@ -125,7 +125,7 @@ export default function DbViewerPage() {
           <CardContent className="space-y-2">
             {queue.map(q => (
               <details key={q.id} className="border rounded p-2">
-                <summary className="cursor-pointer text-sm">{q.visitor_name} - {q.status}</summary>
+                <summary className="cursor-pointer text-sm">{q.visitor_name || q.phone} - {q.status}</summary>
                 <pre className="mt-2 text-xs overflow-auto">{JSON.stringify(q, null, 2)}</pre>
               </details>
             ))}
