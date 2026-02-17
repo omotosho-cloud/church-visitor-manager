@@ -164,20 +164,22 @@ export default function VisitorsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Visitors</h1>
           <p className="text-muted-foreground">Manage first-time visitors and their follow-up status.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             {selectedVisitors.length > 0 && (
               <Button 
                 variant="default" 
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => setIsSendSmsDialogOpen(true)}
               >
                 <Send className="h-4 w-4" />
-                Send SMS ({selectedVisitors.length})
+                <span className="hidden sm:inline">Send SMS</span> ({selectedVisitors.length})
               </Button>
             )}
             <Button 
                 variant="outline" 
-                className="flex items-center gap-2"
+                size="sm"
+                className="hidden sm:flex items-center gap-2"
                 onClick={() => setIsBulkUploadOpen(true)}
             >
                 <Download className="h-4 w-4" />
@@ -185,7 +187,8 @@ export default function VisitorsPage() {
             </Button>
             <Button 
                 variant="outline" 
-                className="flex items-center gap-2"
+                size="sm"
+                className="hidden sm:flex items-center gap-2"
                 onClick={exportToCSV}
                 disabled={filteredVisitors.length === 0}
             >
@@ -194,19 +197,42 @@ export default function VisitorsPage() {
             </Button>
             <Button 
                 variant="outline" 
-                className="flex items-center gap-2"
+                size="sm"
+                className="hidden sm:flex items-center gap-2"
                 onClick={() => setIsScheduleDialogOpen(true)}
             >
                 <MessageSquare className="h-4 w-4" />
-                Broadcast SMS
+                Broadcast
             </Button>
             <Button 
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => setIsAddDialogOpen(true)}
             >
                 <UserPlus className="h-4 w-4" />
-                Add Visitor
+                <span className="hidden sm:inline">Add Visitor</span>
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="sm:hidden">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsBulkUploadOpen(true)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV} disabled={filteredVisitors.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsScheduleDialogOpen(true)}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Broadcast SMS
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </div>
 
@@ -307,7 +333,8 @@ export default function VisitorsPage() {
             </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md border overflow-auto">
+            <div className="min-w-[600px]">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -318,23 +345,23 @@ export default function VisitorsPage() {
                     />
                   </TableHead>
                   <TableHead>Visitor Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Gender</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Date Added</TableHead>
+                  <TableHead className="hidden sm:table-cell">Phone</TableHead>
+                  <TableHead className="hidden md:table-cell">Gender</TableHead>
+                  <TableHead className="hidden lg:table-cell">Service</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date Added</TableHead>
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Loading visitors...
                     </TableCell>
                   </TableRow>
                 ) : filteredVisitors.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No visitors found.
                     </TableCell>
                   </TableRow>
@@ -347,15 +374,20 @@ export default function VisitorsPage() {
                           onCheckedChange={() => toggleSelectVisitor(visitor.id!)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">{visitor.name}</TableCell>
-                      <TableCell className="font-mono text-xs">{visitor.phone}</TableCell>
-                      <TableCell className="capitalize">
+                      <TableCell className="font-medium">
+                        <div>
+                          <div>{visitor.name}</div>
+                          <div className="text-xs text-muted-foreground sm:hidden font-mono">{visitor.phone}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell font-mono text-xs">{visitor.phone}</TableCell>
+                      <TableCell className="hidden md:table-cell capitalize">
                         <Badge variant="outline" className="font-normal">
                           {visitor.gender}
                         </Badge>
                       </TableCell>
-                      <TableCell>{visitor.service || '-'}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                      <TableCell className="hidden lg:table-cell">{visitor.service || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
                         {format(new Date(visitor.created_at!), 'MMM d, yyyy')}
                       </TableCell>
                       <TableCell>
@@ -376,6 +408,7 @@ export default function VisitorsPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
