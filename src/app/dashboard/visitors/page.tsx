@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, MoreVertical, MessageSquare, Filter, ChevronLeft, ChevronRight, X, Download } from 'lucide-react';
+import { UserPlus, Search, MoreVertical, MessageSquare, Filter, ChevronLeft, ChevronRight, X, Download, Send } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,6 +35,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { AddVisitorDialog } from '@/components/add-visitor-dialog';
 import { ScheduleSmsDialog } from '@/components/schedule-sms-dialog';
+import { BulkUploadDialog } from '@/components/bulk-upload-dialog';
+import { SendSmsToSelectedDialog } from '@/components/send-sms-to-selected-dialog';
 import { getVisitors, deleteVisitor as dbDeleteVisitor, getServices } from '@/lib/db';
 import { Visitor } from '@/lib/types';
 import { format } from 'date-fns';
@@ -45,6 +48,7 @@ export default function VisitorsPage() {
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -52,6 +56,8 @@ export default function VisitorsPage() {
   const [filterGender, setFilterGender] = useState<string>('all');
   const [filterService, setFilterService] = useState<string>('all');
   const [services, setServices] = useState<string[]>([]);
+  const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
+  const [isSendSmsDialogOpen, setIsSendSmsDialogOpen] = useState(false);
 
   const fetchVisitors = async () => {
     try {
@@ -99,6 +105,24 @@ export default function VisitorsPage() {
     setFilterService('all');
   };
 
+  const toggleSelectAll = () => {
+    if (selectedVisitors.length === filteredVisitors.length) {
+      setSelectedVisitors([]);
+    } else {
+      setSelectedVisitors(filteredVisitors.map(v => v.id!));
+    }
+  };
+
+  const toggleSelectVisitor = (id: string) => {
+    setSelectedVisitors(prev => 
+      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+    );
+  };
+
+  const getSelectedVisitorObjects = () => {
+    return visitors.filter(v => selectedVisitors.includes(v.id!));
+  };
+
   const deleteVisitor = async (id: string) => {
     if (!confirm('Delete this visitor?')) return;
     try {
@@ -141,6 +165,24 @@ export default function VisitorsPage() {
           <p className="text-muted-foreground">Manage first-time visitors and their follow-up status.</p>
         </div>
         <div className="flex items-center gap-2">
+            {selectedVisitors.length > 0 && (
+              <Button 
+                variant="default" 
+                className="flex items-center gap-2"
+                onClick={() => setIsSendSmsDialogOpen(true)}
+              >
+                <Send className="h-4 w-4" />
+                Send SMS ({selectedVisitors.length})
+              </Button>
+            )}
+            <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={() => setIsBulkUploadOpen(true)}
+            >
+                <Download className="h-4 w-4" />
+                Bulk Upload
+            </Button>
             <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
@@ -182,6 +224,19 @@ export default function VisitorsPage() {
         open={isScheduleDialogOpen}
         onOpenChange={setIsScheduleDialogOpen}
         onSuccess={() => {}}
+      />
+
+      <BulkUploadDialog
+        open={isBulkUploadOpen}
+        onOpenChange={setIsBulkUploadOpen}
+        onSuccess={fetchVisitors}
+      />
+
+      <SendSmsToSelectedDialog
+        open={isSendSmsDialogOpen}
+        onOpenChange={setIsSendSmsDialogOpen}
+        selectedVisitors={getSelectedVisitorObjects()}
+        onSuccess={() => setSelectedVisitors([])}
       />
 
       <Card>
@@ -256,6 +311,12 @@ export default function VisitorsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={selectedVisitors.length === filteredVisitors.length && filteredVisitors.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Visitor Name</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Gender</TableHead>
@@ -280,6 +341,12 @@ export default function VisitorsPage() {
                 ) : (
                   paginatedVisitors.map((visitor) => (
                     <TableRow key={visitor.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedVisitors.includes(visitor.id!)}
+                          onCheckedChange={() => toggleSelectVisitor(visitor.id!)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{visitor.name}</TableCell>
                       <TableCell className="font-mono text-xs">{visitor.phone}</TableCell>
                       <TableCell className="capitalize">
