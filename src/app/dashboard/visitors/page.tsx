@@ -37,11 +37,15 @@ import { AddVisitorDialog } from '@/components/add-visitor-dialog';
 import { ScheduleSmsDialog } from '@/components/schedule-sms-dialog';
 import { BulkUploadDialog } from '@/components/bulk-upload-dialog';
 import { SendSmsToSelectedDialog } from '@/components/send-sms-to-selected-dialog';
+import { PromoteToMemberDialog } from '@/components/promote-to-member-dialog';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { getVisitors, deleteVisitor as dbDeleteVisitor, getServices } from '@/lib/db';
 import { Visitor } from '@/lib/types';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Toaster } from 'sonner';
+import { MESSAGES, ITEMS_PER_PAGE } from '@/lib/constants';
+import { TableSkeleton } from '@/components/table-skeleton';
 
 export default function VisitorsPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -51,13 +55,17 @@ export default function VisitorsPage() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = ITEMS_PER_PAGE;
   const [editingVisitor, setEditingVisitor] = useState<Visitor | null>(null);
   const [filterGender, setFilterGender] = useState<string>('all');
   const [filterService, setFilterService] = useState<string>('all');
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+  const [filterDateTo, setFilterDateTo] = useState<string>('');
   const [services, setServices] = useState<string[]>([]);
   const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
   const [isSendSmsDialogOpen, setIsSendSmsDialogOpen] = useState(false);
+  const [promoteVisitor, setPromoteVisitor] = useState<Visitor | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; bulk: boolean } | null>(null);
 
   const fetchVisitors = async () => {
     try {
@@ -89,7 +97,15 @@ export default function VisitorsPage() {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.phone.includes(search);
     const matchesGender = filterGender === 'all' || v.gender === filterGender;
     const matchesService = filterService === 'all' || v.service === filterService;
-    return matchesSearch && matchesGender && matchesService;
+    
+    let matchesDate = true;
+    if (filterDateFrom || filterDateTo) {
+      const createdDate = new Date(v.created_at!);
+      if (filterDateFrom) matchesDate = matchesDate && createdDate >= new Date(filterDateFrom);
+      if (filterDateTo) matchesDate = matchesDate && createdDate <= new Date(filterDateTo + 'T23:59:59');
+    }
+    
+    return matchesSearch && matchesGender && matchesService && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredVisitors.length / itemsPerPage);
@@ -98,11 +114,13 @@ export default function VisitorsPage() {
     currentPage * itemsPerPage
   );
 
-  const activeFilters = (filterGender !== 'all' ? 1 : 0) + (filterService !== 'all' ? 1 : 0);
+  const activeFilters = (filterGender !== 'all' ? 1 : 0) + (filterService !== 'all' ? 1 : 0) + (filterDateFrom ? 1 : 0) + (filterDateTo ? 1 : 0);
 
   const clearFilters = () => {
     setFilterGender('all');
     setFilterService('all');
+    setFilterDateFrom('');
+    setFilterDateTo('');
   };
 
   const toggleSelectAll = () => {
@@ -124,19 +142,51 @@ export default function VisitorsPage() {
   };
 
   const deleteVisitor = async (id: string) => {
-    if (!confirm('Delete this visitor?')) return;
-    try {
-      await dbDeleteVisitor(id);
-      toast.success('Visitor deleted');
-      fetchVisitors();
-    } catch (error) {
-      toast.error('Failed to delete visitor');
-    }
+    setDeleteConfirm({ id, bulk: false });
   };
 
-  const exportToCSV = () => {
+  const bulkDeleteVisitors = async () => {
+    setDeleteConfirm({ id: '', bulk: true });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    
+    if (deleteConfirm.bulk) {
+      const optimisticVisitors = visitors.filter(v => !selectedVisitors.includes(v.id!));
+      setVisitors(optimisticVisitors);
+      
+      try {
+        await Promise.all(selectedVisitors.map(id => dbDeleteVisitor(id)));
+        toast.success(`${selectedVisitors.length} visitors deleted successfully`);
+        setSelectedVisitors([]);
+      } catch (error) {
+        toast.error('Failed to delete some visitors');
+        fetchVisitors();
+      }
+    } else {
+      const optimisticVisitors = visitors.filter(v => v.id !== deleteConfirm.id);
+      setVisitors(optimisticVisitors);
+      
+      try {
+        await dbDeleteVisitor(deleteConfirm.id);
+        toast.success(MESSAGES.SUCCESS.VISITOR_DELETED);
+      } catch (error) {
+        toast.error(MESSAGES.ERROR.DELETE_FAILED);
+        fetchVisitors();
+      }
+    }
+    
+    setDeleteConfirm(null);
+  };
+
+  const exportToCSV = (selectedOnly = false) => {
+    const dataToExport = selectedOnly 
+      ? visitors.filter(v => selectedVisitors.includes(v.id!))
+      : filteredVisitors;
+    
     const headers = ['Name', 'Phone', 'Gender', 'Service', 'Notes', 'Date Added'];
-    const rows = filteredVisitors.map(v => [
+    const rows = dataToExport.map(v => [
       v.name,
       v.phone,
       v.gender,
@@ -150,10 +200,10 @@ export default function VisitorsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `visitors_${format(Date.now(), 'yyyy-MM-dd')}.csv`;
+    a.download = `visitors_${selectedOnly ? 'selected_' : ''}${format(Date.now(), 'yyyy-MM-dd')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('CSV exported successfully');
+    toast.success(MESSAGES.SUCCESS.CSV_EXPORTED);
   };
 
   return (
@@ -166,15 +216,32 @@ export default function VisitorsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
             {selectedVisitors.length > 0 && (
-              <Button 
-                variant="default" 
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => setIsSendSmsDialogOpen(true)}
-              >
-                <Send className="h-4 w-4" />
-                <span className="hidden sm:inline">Send SMS</span> ({selectedVisitors.length})
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => exportToCSV(true)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Selected
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={bulkDeleteVisitors}
+                >
+                  Delete ({selectedVisitors.length})
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setIsSendSmsDialogOpen(true)}
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="hidden sm:inline">Send SMS</span> ({selectedVisitors.length})
+                </Button>
+              </>
             )}
             <Button 
                 variant="outline" 
@@ -189,7 +256,7 @@ export default function VisitorsPage() {
                 variant="outline" 
                 size="sm"
                 className="hidden sm:flex items-center gap-2"
-                onClick={exportToCSV}
+                onClick={() => exportToCSV(false)}
                 disabled={filteredVisitors.length === 0}
             >
                 <Download className="h-4 w-4" />
@@ -223,7 +290,7 @@ export default function VisitorsPage() {
                   <Download className="h-4 w-4 mr-2" />
                   Bulk Upload
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToCSV} disabled={filteredVisitors.length === 0}>
+                <DropdownMenuItem onClick={() => exportToCSV(false)} disabled={filteredVisitors.length === 0}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </DropdownMenuItem>
@@ -263,6 +330,25 @@ export default function VisitorsPage() {
         onOpenChange={setIsSendSmsDialogOpen}
         selectedVisitors={getSelectedVisitorObjects()}
         onSuccess={() => setSelectedVisitors([])}
+      />
+
+      <PromoteToMemberDialog
+        open={!!promoteVisitor}
+        onOpenChange={(open) => !open && setPromoteVisitor(null)}
+        visitor={promoteVisitor}
+        onSuccess={fetchVisitors}
+      />
+
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={(open) => !open && setDeleteConfirm(null)}
+        onConfirm={confirmDelete}
+        title={deleteConfirm?.bulk ? 'Delete Multiple Visitors' : 'Delete Visitor'}
+        description={
+          deleteConfirm?.bulk
+            ? `Are you sure you want to delete ${selectedVisitors.length} selected visitors? This action cannot be undone.`
+            : 'Are you sure you want to delete this visitor? This action cannot be undone.'
+        }
       />
 
       <Card>
@@ -327,6 +413,22 @@ export default function VisitorsPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Date From</label>
+                        <Input 
+                          type="date" 
+                          value={filterDateFrom} 
+                          onChange={(e) => setFilterDateFrom(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Date To</label>
+                        <Input 
+                          type="date" 
+                          value={filterDateTo} 
+                          onChange={(e) => setFilterDateTo(e.target.value)}
+                        />
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -334,11 +436,11 @@ export default function VisitorsPage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-auto">
-            <div className="min-w-[600px]">
+            <div className="min-w-150">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
+                  <TableHead className="w-12.5">
                     <Checkbox
                       checked={selectedVisitors.length === filteredVisitors.length && filteredVisitors.length > 0}
                       onCheckedChange={toggleSelectAll}
@@ -347,18 +449,14 @@ export default function VisitorsPage() {
                   <TableHead>Visitor Name</TableHead>
                   <TableHead className="hidden sm:table-cell">Phone</TableHead>
                   <TableHead className="hidden md:table-cell">Gender</TableHead>
-                  <TableHead className="hidden lg:table-cell">Service</TableHead>
+                  <TableHead className="hidden lg:table-cell">Birthday</TableHead>
                   <TableHead className="hidden lg:table-cell">Date Added</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Loading visitors...
-                    </TableCell>
-                  </TableRow>
+                  <TableSkeleton rows={5} cols={7} />
                 ) : filteredVisitors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
@@ -386,7 +484,12 @@ export default function VisitorsPage() {
                           {visitor.gender}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">{visitor.service || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {visitor.birth_month && visitor.birth_day 
+                          ? `${new Date(2000, visitor.birth_month - 1, visitor.birth_day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                          : '-'
+                        }
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
                         {format(new Date(visitor.created_at!), 'MMM d, yyyy')}
                       </TableCell>
@@ -399,6 +502,7 @@ export default function VisitorsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setEditingVisitor(visitor)}>Edit Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPromoteVisitor(visitor)}>Promote to Member</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={() => deleteVisitor(visitor.id || '')}>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

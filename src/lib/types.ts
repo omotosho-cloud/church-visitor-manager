@@ -1,14 +1,35 @@
-export type TriggerType = 'instant' | 'delay' | 'scheduled';
+export type TriggerType = 'instant' | 'delay' | 'scheduled' | 'birthday';
 export type MessageStatus = 'pending' | 'sent' | 'failed';
 export type AdminRole = 'admin';
 export type AuthProvider = 'google' | 'email';
+export type MembershipStatus = 'active' | 'inactive' | 'transferred';
+export type MemberCategory = 'adult' | 'youth' | 'children';
 
 export interface Visitor {
   id?: string;
   name: string;
   phone: string;
   gender: string;
+  birth_month?: number;
+  birth_day?: number;
   service?: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface Member {
+  id?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  gender: string;
+  birth_month?: number;
+  birth_day?: number;
+  address?: string;
+  photo?: string;
+  join_date?: string;
+  membership_status: MembershipStatus;
+  category: MemberCategory;
   notes?: string;
   created_at?: string;
 }

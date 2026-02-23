@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Visitor, Template, MessageQueueItem, SmsLog, Settings } from './types';
+import { Visitor, Template, MessageQueueItem, SmsLog, Settings, Member } from './types';
 
 // Visitors
 export const getVisitors = async () => {
@@ -227,4 +227,100 @@ export const uploadFile = async (file: File) => {
     .getPublicUrl(fileName);
   
   return { url: publicUrl };
+};
+
+// Members
+export const getMembers = async () => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data as Member[];
+};
+
+export const getMember = async (id: string) => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data as Member;
+};
+
+export const createMember = async (member: Omit<Member, 'id' | 'created_at'>) => {
+  const { data, error } = await supabase
+    .from('members')
+    .insert(member)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Member;
+};
+
+export const updateMember = async (id: string, member: Partial<Member>) => {
+  const { data, error } = await supabase
+    .from('members')
+    .update(member)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Member;
+};
+
+export const deleteMember = async (id: string) => {
+  const { error } = await supabase
+    .from('members')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+};
+
+export const promoteVisitorToMember = async (visitorId: string, additionalData: Partial<Member>) => {
+  const visitor = await getVisitor(visitorId);
+  
+  const memberData: Omit<Member, 'id' | 'created_at'> = {
+    name: visitor.name,
+    phone: visitor.phone,
+    gender: visitor.gender,
+    birth_month: visitor.birth_month,
+    birth_day: visitor.birth_day,
+    membership_status: 'active',
+    category: 'adult',
+    join_date: new Date().toISOString().split('T')[0],
+    ...additionalData,
+  };
+  
+  return await createMember(memberData);
+};
+
+export const getUpcomingBirthdays = async (days: number = 7) => {
+  const members = await getMembers();
+  const today = new Date();
+  const upcoming: Member[] = [];
+
+  for (const member of members) {
+    if (!member.birth_month || !member.birth_day) continue;
+
+    const thisYear = today.getFullYear();
+    const birthday = new Date(thisYear, member.birth_month - 1, member.birth_day);
+    
+    if (birthday < today) {
+      birthday.setFullYear(thisYear + 1);
+    }
+
+    const daysUntil = Math.ceil((birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntil >= 0 && daysUntil <= days) {
+      upcoming.push(member);
+    }
+  }
+
+  return upcoming.sort((a, b) => {
+    const aDate = new Date(today.getFullYear(), a.birth_month! - 1, a.birth_day!);
+    const bDate = new Date(today.getFullYear(), b.birth_month! - 1, b.birth_day!);
+    return aDate.getTime() - bDate.getTime();
+  });
 };

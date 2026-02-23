@@ -34,12 +34,14 @@ import {
 import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, createMessageLog, createQueuedMessage } from '@/lib/db';
 import { toast } from 'sonner';
 import { sendSms } from '@/lib/sms';
-import { Template, MessageQueueItem, Visitor } from '@/lib/types';
+import {  Visitor } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Enter a valid phone number'),
   gender: z.string().min(1, 'Please select gender'),
+  birth_month: z.string().optional(),
+  birth_day: z.string().optional(),
   service: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -75,6 +77,8 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
       name: '',
       phone: '',
       gender: '',
+      birth_month: '',
+      birth_day: '',
       service: '',
       notes: '',
     },
@@ -86,6 +90,8 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         name: editVisitor.name,
         phone: editVisitor.phone,
         gender: editVisitor.gender,
+        birth_month: editVisitor.birth_month?.toString() || '',
+        birth_day: editVisitor.birth_day?.toString() || '',
         service: editVisitor.service || '',
         notes: editVisitor.notes || '',
       });
@@ -94,6 +100,8 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         name: '',
         phone: '',
         gender: '',
+        birth_month: '',
+        birth_day: '',
         service: '',
         notes: '',
       });
@@ -113,17 +121,24 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         return;
       }
 
-      let visitorData: Visitor;
+      // Convert birth_month and birth_day to numbers
+      const visitorData = {
+        ...values,
+        birth_month: values.birth_month ? parseInt(values.birth_month) : undefined,
+        birth_day: values.birth_day ? parseInt(values.birth_day) : undefined,
+      };
+
+      let visitor: Visitor;
       
       if (editVisitor) {
-        visitorData = await updateVisitor(editVisitor.id!, values);
+        visitor = await updateVisitor(editVisitor.id!, visitorData);
         toast.success('Visitor updated successfully!');
         form.reset();
         onSuccess();
         onOpenChange(false);
         return;
       } else {
-        visitorData = await createVisitor(values);
+        visitor = await createVisitor(visitorData);
       }
       
       // Trigger instant SMS if an 'instant' template exists
@@ -141,9 +156,9 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               const result = await sendSms(values.phone, message);
               
               await createMessageLog({
-                  visitor_id: visitorData.id,
-                  visitor_name: values.name,
-                  phone: values.phone,
+                  visitor_id: visitor.id,
+                  visitor_name: visitorData.name,
+                  phone: visitorData.phone,
                   message,
                   status: result.success ? 'sent' : 'failed',
                   provider_response: 'results' in result ? result.results : undefined,
@@ -163,9 +178,9 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               scheduledFor.setDate(scheduledFor.getDate() + (t.delay_days || 0));
               
               await createQueuedMessage({
-                  visitor_id: visitorData.id!,
+                  visitor_id: visitor.id!,
                   template_id: t.id!,
-                  phone: values.phone,
+                  phone: visitorData.phone,
                   message: t.message,
                   scheduled_for: scheduledFor.toISOString(),
                   status: 'pending',
@@ -241,6 +256,61 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                       <SelectContent>
                         <SelectItem value="male">Male</SelectItem>
                         <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="birth_month"
+                render={({ field }: { field: ControllerRenderProps<FormValues, 'birth_month'> }) => (
+                  <FormItem>
+                    <FormLabel>Birth Month</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        <SelectItem value="1">January</SelectItem>
+                        <SelectItem value="2">February</SelectItem>
+                        <SelectItem value="3">March</SelectItem>
+                        <SelectItem value="4">April</SelectItem>
+                        <SelectItem value="5">May</SelectItem>
+                        <SelectItem value="6">June</SelectItem>
+                        <SelectItem value="7">July</SelectItem>
+                        <SelectItem value="8">August</SelectItem>
+                        <SelectItem value="9">September</SelectItem>
+                        <SelectItem value="10">October</SelectItem>
+                        <SelectItem value="11">November</SelectItem>
+                        <SelectItem value="12">December</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="birth_day"
+                render={({ field }: { field: ControllerRenderProps<FormValues, 'birth_day'> }) => (
+                  <FormItem>
+                    <FormLabel>Birth Day</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
