@@ -58,6 +58,7 @@ export default function VisitorsPage() {
   const itemsPerPage = ITEMS_PER_PAGE;
   const [editingVisitor, setEditingVisitor] = useState<Visitor | null>(null);
   const [filterGender, setFilterGender] = useState<string>('all');
+  const [filterMaritalStatus, setFilterMaritalStatus] = useState<string>('all');
   const [filterService, setFilterService] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState<string>('');
   const [filterDateTo, setFilterDateTo] = useState<string>('');
@@ -96,6 +97,7 @@ export default function VisitorsPage() {
   const filteredVisitors = visitors.filter(v => {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.phone.includes(search);
     const matchesGender = filterGender === 'all' || v.gender === filterGender;
+    const matchesMaritalStatus = filterMaritalStatus === 'all' || v.marital_status === filterMaritalStatus;
     const matchesService = filterService === 'all' || v.service === filterService;
     
     let matchesDate = true;
@@ -105,7 +107,7 @@ export default function VisitorsPage() {
       if (filterDateTo) matchesDate = matchesDate && createdDate <= new Date(filterDateTo + 'T23:59:59');
     }
     
-    return matchesSearch && matchesGender && matchesService && matchesDate;
+    return matchesSearch && matchesGender && matchesMaritalStatus && matchesService && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredVisitors.length / itemsPerPage);
@@ -114,10 +116,11 @@ export default function VisitorsPage() {
     currentPage * itemsPerPage
   );
 
-  const activeFilters = (filterGender !== 'all' ? 1 : 0) + (filterService !== 'all' ? 1 : 0) + (filterDateFrom ? 1 : 0) + (filterDateTo ? 1 : 0);
+  const activeFilters = (filterGender !== 'all' ? 1 : 0) + (filterMaritalStatus !== 'all' ? 1 : 0) + (filterService !== 'all' ? 1 : 0) + (filterDateFrom ? 1 : 0) + (filterDateTo ? 1 : 0);
 
   const clearFilters = () => {
     setFilterGender('all');
+    setFilterMaritalStatus('all');
     setFilterService('all');
     setFilterDateFrom('');
     setFilterDateTo('');
@@ -396,6 +399,21 @@ export default function VisitorsPage() {
                             <SelectItem value="all">All</SelectItem>
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Marital Status</label>
+                        <Select value={filterMaritalStatus} onValueChange={setFilterMaritalStatus}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="single">Single</SelectItem>
+                            <SelectItem value="married">Married</SelectItem>
+                            <SelectItem value="divorced">Divorced</SelectItem>
+                            <SelectItem value="widowed">Widowed</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

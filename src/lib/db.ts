@@ -293,7 +293,12 @@ export const promoteVisitorToMember = async (visitorId: string, additionalData: 
     ...additionalData,
   };
   
-  return await createMember(memberData);
+  const member = await createMember(memberData);
+  
+  // Remove from visitors after successful promotion
+  await deleteVisitor(visitorId);
+  
+  return member;
 };
 
 export const getUpcomingBirthdays = async (days: number = 7) => {
