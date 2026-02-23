@@ -12,7 +12,8 @@ import {
   Clock, 
   FileText,
   Menu,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Visitors', href: '/dashboard/visitors', icon: Users },
+    { name: 'Members', href: '/dashboard/members', icon: UserCheck },
     { name: 'Templates', href: '/dashboard/templates', icon: FileText },
     { name: 'History', href: '/dashboard/history', icon: Clock },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -131,9 +133,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Menu className="h-6 w-6" />
             </Button>
             <div className="flex-1 ml-4 lg:ml-0">
-               <h2 className="text-lg font-semibold tracking-tight">
+              {/* Mobile: Show church name and logo */}
+              <div className="flex items-center gap-2 lg:hidden">
+                {settings.logo && (
+                  <img src={settings.logo} alt="Logo" className="h-8 w-8 object-contain" />
+                )}
+                <h2 className="text-lg font-bold text-primary">{settings.church_name}</h2>
+              </div>
+              {/* Desktop: Show page title */}
+              <h2 className="hidden lg:block text-lg font-semibold tracking-tight">
                 {navItems.find(i => i.href === pathname)?.name || 'Dashboard'}
-               </h2>
+              </h2>
             </div>
           </header>
           

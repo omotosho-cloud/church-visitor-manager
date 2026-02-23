@@ -14,6 +14,8 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Enter a valid phone number'),
   gender: z.string().min(1, 'Please select gender'),
+  birth_month: z.string().optional(),
+  birth_day: z.string().optional(),
   service: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -44,16 +46,24 @@ export default function VisitorFormPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', phone: '', gender: '', service: '', notes: '' },
+    defaultValues: { name: '', phone: '', gender: '', birth_month: '', birth_day: '', service: '', notes: '' },
   });
 
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
+      
+      // Convert birth_month and birth_day to numbers
+      const visitorData = {
+        ...values,
+        birth_month: values.birth_month ? parseInt(values.birth_month) : undefined,
+        birth_day: values.birth_day ? parseInt(values.birth_day) : undefined,
+      };
+      
       const res = await fetch('/api/visitor-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(visitorData),
       });
 
       const data = await res.json();
@@ -75,7 +85,7 @@ export default function VisitorFormPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
         <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center">
           <div className="mb-4 text-green-500">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +101,7 @@ export default function VisitorFormPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
         {logo && (
           <div className="flex justify-center mb-4">
@@ -145,6 +155,61 @@ export default function VisitorFormPage() {
                       <SelectContent>
                         <SelectItem value="male">Male</SelectItem>
                         <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="birth_month"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Birth Month</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        <SelectItem value="1">January</SelectItem>
+                        <SelectItem value="2">February</SelectItem>
+                        <SelectItem value="3">March</SelectItem>
+                        <SelectItem value="4">April</SelectItem>
+                        <SelectItem value="5">May</SelectItem>
+                        <SelectItem value="6">June</SelectItem>
+                        <SelectItem value="7">July</SelectItem>
+                        <SelectItem value="8">August</SelectItem>
+                        <SelectItem value="9">September</SelectItem>
+                        <SelectItem value="10">October</SelectItem>
+                        <SelectItem value="11">November</SelectItem>
+                        <SelectItem value="12">December</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="birth_day"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Birth Day</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

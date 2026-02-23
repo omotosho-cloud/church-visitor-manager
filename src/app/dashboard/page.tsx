@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, MessageSquare, Calendar, TrendingUp } from 'lucide-react';
+import { Users, MessageSquare, TrendingUp, UserCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getVisitors, getMessageLogs } from '@/lib/db';
-import { Visitor, SmsLog } from '@/lib/types';
+import { getVisitors, getMessageLogs, getMembers, getUpcomingBirthdays } from '@/lib/db';
+import { Visitor, SmsLog, Member } from '@/lib/types';
 import { format, subDays } from 'date-fns';
 
 export default function DashboardPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<SmsLog[]>([]);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -19,10 +21,14 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const visitorItems = await getVisitors();
+        const memberItems = await getMembers();
         const logItems = await getMessageLogs();
+        const birthdays = await getUpcomingBirthdays(7);
         
         setVisitors(visitorItems);
+        setMembers(memberItems);
         setLogs(logItems);
+        setUpcomingBirthdays(birthdays);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -54,6 +60,8 @@ export default function DashboardPage() {
     last7Days: filteredVisitors.filter(v => new Date(v.created_at!).getTime() >= last7Days).length,
     last30Days: filteredVisitors.filter(v => new Date(v.created_at!).getTime() >= last30Days).length,
     messagesSent: filteredLogs.filter(l => l.status === 'sent').length,
+    totalMembers: members.length,
+    activeMembers: members.filter(m => m.membership_status === 'active').length,
   };
 
   const recentVisitors = filteredVisitors.slice(0, 5);
@@ -99,23 +107,23 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalMembers}</div>
+            <p className="text-xs text-muted-foreground">{stats.activeMembers} active</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last 7 Days</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.last7Days}</div>
             <p className="text-xs text-muted-foreground">New visitors this week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last 30 Days</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.last30Days}</div>
-            <p className="text-xs text-muted-foreground">New visitors this month</p>
           </CardContent>
         </Card>
 
@@ -162,6 +170,36 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Upcoming Birthdays</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {upcomingBirthdays.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No birthdays in the next 7 days</p>
+            ) : (
+              <div className="space-y-4">
+                {upcomingBirthdays.slice(0, 5).map((member) => (
+                  <div key={member.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-muted-foreground">{member.phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline">🎂</Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(2000, member.birth_month! - 1, member.birth_day!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
             <CardTitle>Recent Messages</CardTitle>
           </CardHeader>
           <CardContent>
@@ -187,6 +225,40 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Member Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Active Members</span>
+                <Badge variant="default">{stats.activeMembers}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Inactive Members</span>
+                <Badge variant="outline">{members.filter(m => m.membership_status === 'inactive').length}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Transferred</span>
+                <Badge variant="outline">{members.filter(m => m.membership_status === 'transferred').length}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Adults</span>
+                <Badge variant="outline">{members.filter(m => m.category === 'adult').length}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Youth</span>
+                <Badge variant="outline">{members.filter(m => m.category === 'youth').length}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Children</span>
+                <Badge variant="outline">{members.filter(m => m.category === 'children').length}</Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

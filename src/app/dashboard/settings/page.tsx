@@ -33,18 +33,30 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size should be less than 2MB');
+      return;
+    }
+    
     try {
       setUploading(true);
-      const result = await uploadFile(file) as { url?: string } | { url?: string }[];
-      const url = Array.isArray(result) ? result[0]?.url : result?.url;
-      if (url) {
-        setSettings({ ...settings, logo: url });
+      const result = await uploadFile(file);
+      if (result?.url) {
+        setSettings({ ...settings, logo: result.url });
         toast.success('Logo uploaded successfully');
       } else {
         toast.error('Failed to get logo URL');
       }
     } catch (error) {
-      toast.error('Failed to upload logo');
+      console.error('Upload error:', error);
+      toast.error('Failed to upload logo. Please check Supabase storage configuration.');
     } finally {
       setUploading(false);
     }

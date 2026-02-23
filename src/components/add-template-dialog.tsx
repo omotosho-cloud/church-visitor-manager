@@ -37,7 +37,7 @@ import { Template } from '@/lib/types';
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   message: z.string().min(10, 'Message body is too short'),
-  trigger_type: z.enum(['instant', 'delay', 'scheduled']),
+  trigger_type: z.enum(['instant', 'delay', 'scheduled', 'birthday']),
   delay_days: z.number().min(0).optional(),
 });
 
@@ -161,6 +161,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
                         <SelectItem value="instant">Instant</SelectItem>
                         <SelectItem value="delay">Delay (Follow-up)</SelectItem>
                         <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="birthday">Birthday</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
