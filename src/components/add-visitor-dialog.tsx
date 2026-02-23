@@ -34,12 +34,15 @@ import {
 import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, createMessageLog, createQueuedMessage } from '@/lib/db';
 import { toast } from 'sonner';
 import { sendSms } from '@/lib/sms';
-import {  Visitor } from '@/lib/types';
+import {  Visitor, MaritalStatus } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Enter a valid phone number'),
   gender: z.string().min(1, 'Please select gender'),
+  marital_status: z.string().optional(),
+  anniversary_month: z.string().optional(),
+  anniversary_day: z.string().optional(),
   birth_month: z.string().optional(),
   birth_day: z.string().optional(),
   service: z.string().optional(),
@@ -77,6 +80,9 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
       name: '',
       phone: '',
       gender: '',
+      marital_status: '',
+      anniversary_month: '',
+      anniversary_day: '',
       birth_month: '',
       birth_day: '',
       service: '',
@@ -90,6 +96,9 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         name: editVisitor.name,
         phone: editVisitor.phone,
         gender: editVisitor.gender,
+        marital_status: editVisitor.marital_status || '',
+        anniversary_month: editVisitor.anniversary_month?.toString() || '',
+        anniversary_day: editVisitor.anniversary_day?.toString() || '',
         birth_month: editVisitor.birth_month?.toString() || '',
         birth_day: editVisitor.birth_day?.toString() || '',
         service: editVisitor.service || '',
@@ -100,6 +109,9 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         name: '',
         phone: '',
         gender: '',
+        marital_status: '',
+        anniversary_month: '',
+        anniversary_day: '',
         birth_month: '',
         birth_day: '',
         service: '',
@@ -123,9 +135,16 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
 
       // Convert birth_month and birth_day to numbers
       const visitorData = {
-        ...values,
+        name: values.name,
+        phone: values.phone,
+        gender: values.gender,
+        marital_status: (values.marital_status as MaritalStatus) || undefined,
+        anniversary_month: values.anniversary_month ? parseInt(values.anniversary_month) : undefined,
+        anniversary_day: values.anniversary_day ? parseInt(values.anniversary_day) : undefined,
         birth_month: values.birth_month ? parseInt(values.birth_month) : undefined,
         birth_day: values.birth_day ? parseInt(values.birth_day) : undefined,
+        service: values.service,
+        notes: values.notes,
       };
 
       let visitor: Visitor;
@@ -157,8 +176,8 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               
               await createMessageLog({
                   visitor_id: visitor.id,
-                  visitor_name: visitorData.name,
-                  phone: visitorData.phone,
+                  visitor_name: values.name,
+                  phone: values.phone,
                   message,
                   status: result.success ? 'sent' : 'failed',
                   provider_response: 'results' in result ? result.results : undefined,
@@ -180,7 +199,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               await createQueuedMessage({
                   visitor_id: visitor.id!,
                   template_id: t.id!,
-                  phone: visitorData.phone,
+                  phone: values.phone,
                   message: t.message,
                   scheduled_for: scheduledFor.toISOString(),
                   status: 'pending',
@@ -204,7 +223,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-106.25">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editVisitor ? 'Edit Visitor' : 'Add New Visitor'}</DialogTitle>
           <DialogDescription>
@@ -318,6 +337,88 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                 )}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="marital_status"
+                render={({ field }: { field: ControllerRenderProps<FormValues, 'marital_status'> }) => (
+                  <FormItem>
+                    <FormLabel>Marital Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch('marital_status') === 'married' && (
+                <FormField
+                  control={form.control}
+                  name="anniversary_month"
+                  render={({ field }: { field: ControllerRenderProps<FormValues, 'anniversary_month'> }) => (
+                    <FormItem>
+                      <FormLabel>Anniversary Month</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent position="popper" className="max-h-50">
+                          <SelectItem value="1">January</SelectItem>
+                          <SelectItem value="2">February</SelectItem>
+                          <SelectItem value="3">March</SelectItem>
+                          <SelectItem value="4">April</SelectItem>
+                          <SelectItem value="5">May</SelectItem>
+                          <SelectItem value="6">June</SelectItem>
+                          <SelectItem value="7">July</SelectItem>
+                          <SelectItem value="8">August</SelectItem>
+                          <SelectItem value="9">September</SelectItem>
+                          <SelectItem value="10">October</SelectItem>
+                          <SelectItem value="11">November</SelectItem>
+                          <SelectItem value="12">December</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+            {form.watch('marital_status') === 'married' && (
+              <FormField
+                control={form.control}
+                name="anniversary_day"
+                render={({ field }: { field: ControllerRenderProps<FormValues, 'anniversary_day'> }) => (
+                  <FormItem>
+                    <FormLabel>Anniversary Day</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="service"

@@ -4,12 +4,16 @@ export type AdminRole = 'admin';
 export type AuthProvider = 'google' | 'email';
 export type MembershipStatus = 'active' | 'inactive' | 'transferred';
 export type MemberCategory = 'adult' | 'youth' | 'children';
+export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed';
 
 export interface Visitor {
   id?: string;
   name: string;
   phone: string;
   gender: string;
+  marital_status?: MaritalStatus;
+  anniversary_month?: number;
+  anniversary_day?: number;
   birth_month?: number;
   birth_day?: number;
   service?: string;
@@ -23,6 +27,9 @@ export interface Member {
   phone: string;
   email?: string;
   gender: string;
+  marital_status?: MaritalStatus;
+  anniversary_month?: number;
+  anniversary_day?: number;
   birth_month?: number;
   birth_day?: number;
   address?: string;

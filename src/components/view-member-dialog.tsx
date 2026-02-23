@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Member } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getStatusColor, getCategoryColor } from '@/lib/utils';
@@ -19,6 +19,9 @@ export function ViewMemberDialog({ open, onOpenChange, member }: ViewMemberDialo
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Member Details</DialogTitle>
+          <DialogDescription>
+            View complete member information
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -41,6 +44,12 @@ export function ViewMemberDialog({ open, onOpenChange, member }: ViewMemberDialo
               <p className="capitalize">{member.gender}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Marital Status</p>
+              <p className="capitalize">{member.marital_status || 'Not set'}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <p className="text-sm text-muted-foreground">Birthday</p>
               <p>
                 {member.birth_month && member.birth_day 
@@ -49,6 +58,14 @@ export function ViewMemberDialog({ open, onOpenChange, member }: ViewMemberDialo
                 }
               </p>
             </div>
+            {member.marital_status === 'married' && member.anniversary_month && member.anniversary_day && (
+              <div>
+                <p className="text-sm text-muted-foreground">Anniversary</p>
+                <p>
+                  {new Date(2000, member.anniversary_month - 1, member.anniversary_day).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

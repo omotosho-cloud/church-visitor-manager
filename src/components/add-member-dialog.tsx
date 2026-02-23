@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createMember, updateMember } from '@/lib/db';
-import { Member, MembershipStatus, MemberCategory } from '@/lib/types';
+import { Member, MembershipStatus, MemberCategory, MaritalStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { validatePhone } from '@/lib/utils';
 import { MESSAGES } from '@/lib/constants';
@@ -25,6 +25,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     phone: string;
     email: string;
     gender: string;
+    marital_status: string;
+    anniversary_month: string;
+    anniversary_day: string;
     birth_month: string;
     birth_day: string;
     address: string;
@@ -37,6 +40,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     phone: '',
     email: '',
     gender: 'male',
+    marital_status: '',
+    anniversary_month: '',
+    anniversary_day: '',
     birth_month: '',
     birth_day: '',
     address: '',
@@ -54,6 +60,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         phone: editMember.phone,
         email: editMember.email || '',
         gender: editMember.gender,
+        marital_status: editMember.marital_status || '',
+        anniversary_month: editMember.anniversary_month?.toString() || '',
+        anniversary_day: editMember.anniversary_day?.toString() || '',
         birth_month: editMember.birth_month?.toString() || '',
         birth_day: editMember.birth_day?.toString() || '',
         address: editMember.address || '',
@@ -68,6 +77,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         phone: '',
         email: '',
         gender: 'male',
+        marital_status: '',
+        anniversary_month: '',
+        anniversary_day: '',
         birth_month: '',
         birth_day: '',
         address: '',
@@ -92,6 +104,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     try {
       const memberData = {
         ...formData,
+        marital_status: (formData.marital_status as MaritalStatus) || undefined,
+        anniversary_month: formData.anniversary_month ? parseInt(formData.anniversary_month) : undefined,
+        anniversary_day: formData.anniversary_day ? parseInt(formData.anniversary_day) : undefined,
         birth_month: formData.birth_month ? parseInt(formData.birth_month) : undefined,
         birth_day: formData.birth_day ? parseInt(formData.birth_day) : undefined,
       };
@@ -118,6 +133,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editMember ? 'Edit Member' : 'Add New Member'}</DialogTitle>
+          <DialogDescription>
+            {editMember ? 'Update member information' : 'Enter member details'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -165,6 +183,40 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="marital_status">Marital Status</Label>
+              <Select value={formData.marital_status} onValueChange={(value: MaritalStatus) => setFormData({ ...formData, marital_status: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {formData.marital_status === 'married' && (
+              <div className="space-y-2">
+                <Label htmlFor="anniversary_month">Anniversary Month</Label>
+                <Select value={formData.anniversary_month} onValueChange={(value) => setFormData({ ...formData, anniversary_month: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-50">
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        {new Date(2000, i).toLocaleDateString('en-US', { month: 'long' })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="birth_month">Birth Month</Label>
@@ -196,15 +248,34 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="join_date">Join Date</Label>
-              <Input
-                id="join_date"
-                type="date"
-                value={formData.join_date}
-                onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
-              />
-            </div>
+            {formData.marital_status === 'married' && (
+              <div className="space-y-2">
+                <Label htmlFor="anniversary_day">Anniversary Day</Label>
+                <Select value={formData.anniversary_day} onValueChange={(value) => setFormData({ ...formData, anniversary_day: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Day" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-50">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {formData.marital_status !== 'married' && (
+              <div className="space-y-2">
+                <Label htmlFor="join_date">Join Date</Label>
+                <Input
+                  id="join_date"
+                  type="date"
+                  value={formData.join_date}
+                  onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

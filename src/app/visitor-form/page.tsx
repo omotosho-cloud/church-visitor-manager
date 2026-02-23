@@ -14,6 +14,9 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Enter a valid phone number'),
   gender: z.string().min(1, 'Please select gender'),
+  marital_status: z.string().optional(),
+  anniversary_month: z.string().optional(),
+  anniversary_day: z.string().optional(),
   birth_month: z.string().optional(),
   birth_day: z.string().optional(),
   service: z.string().optional(),
@@ -46,7 +49,7 @@ export default function VisitorFormPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', phone: '', gender: '', birth_month: '', birth_day: '', service: '', notes: '' },
+    defaultValues: { name: '', phone: '', gender: '', marital_status: '', anniversary_month: '', anniversary_day: '', birth_month: '', birth_day: '', service: '', notes: '' },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -56,6 +59,9 @@ export default function VisitorFormPage() {
       // Convert birth_month and birth_day to numbers
       const visitorData = {
         ...values,
+        marital_status: values.marital_status || undefined,
+        anniversary_month: values.anniversary_month ? parseInt(values.anniversary_month) : undefined,
+        anniversary_day: values.anniversary_day ? parseInt(values.anniversary_day) : undefined,
         birth_month: values.birth_month ? parseInt(values.birth_month) : undefined,
         birth_day: values.birth_day ? parseInt(values.birth_day) : undefined,
       };
@@ -217,6 +223,88 @@ export default function VisitorFormPage() {
                 )}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="marital_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marital Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch('marital_status') === 'married' && (
+                <FormField
+                  control={form.control}
+                  name="anniversary_month"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anniversary Month</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent position="popper" className="max-h-50">
+                          <SelectItem value="1">January</SelectItem>
+                          <SelectItem value="2">February</SelectItem>
+                          <SelectItem value="3">March</SelectItem>
+                          <SelectItem value="4">April</SelectItem>
+                          <SelectItem value="5">May</SelectItem>
+                          <SelectItem value="6">June</SelectItem>
+                          <SelectItem value="7">July</SelectItem>
+                          <SelectItem value="8">August</SelectItem>
+                          <SelectItem value="9">September</SelectItem>
+                          <SelectItem value="10">October</SelectItem>
+                          <SelectItem value="11">November</SelectItem>
+                          <SelectItem value="12">December</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+            {form.watch('marital_status') === 'married' && (
+              <FormField
+                control={form.control}
+                name="anniversary_day"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Anniversary Day</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper" className="max-h-50">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="service"

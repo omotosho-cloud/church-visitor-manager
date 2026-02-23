@@ -34,6 +34,7 @@ export default function MembersPage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterMaritalStatus, setFilterMaritalStatus] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState<string>('');
   const [filterDateTo, setFilterDateTo] = useState<string>('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -63,6 +64,7 @@ export default function MembersPage() {
     const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search);
     const matchesStatus = filterStatus === 'all' || m.membership_status === filterStatus;
     const matchesCategory = filterCategory === 'all' || m.category === filterCategory;
+    const matchesMaritalStatus = filterMaritalStatus === 'all' || m.marital_status === filterMaritalStatus;
     
     let matchesDate = true;
     if (filterDateFrom || filterDateTo) {
@@ -71,7 +73,7 @@ export default function MembersPage() {
       if (filterDateTo) matchesDate = matchesDate && createdDate <= new Date(filterDateTo + 'T23:59:59');
     }
     
-    return matchesSearch && matchesStatus && matchesCategory && matchesDate;
+    return matchesSearch && matchesStatus && matchesCategory && matchesMaritalStatus && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
@@ -80,11 +82,12 @@ export default function MembersPage() {
     currentPage * itemsPerPage
   );
 
-  const activeFilters = (filterStatus !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0) + (filterDateFrom ? 1 : 0) + (filterDateTo ? 1 : 0);
+  const activeFilters = (filterStatus !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0) + (filterMaritalStatus !== 'all' ? 1 : 0) + (filterDateFrom ? 1 : 0) + (filterDateTo ? 1 : 0);
 
   const clearFilters = () => {
     setFilterStatus('all');
     setFilterCategory('all');
+    setFilterMaritalStatus('all');
     setFilterDateFrom('');
     setFilterDateTo('');
   };
@@ -326,6 +329,21 @@ return (
                         <SelectItem value="adult">Adult</SelectItem>
                         <SelectItem value="youth">Youth</SelectItem>
                         <SelectItem value="children">Children</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Marital Status</label>
+                    <Select value={filterMaritalStatus} onValueChange={setFilterMaritalStatus}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
