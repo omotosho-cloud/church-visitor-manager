@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Member } from '@/lib/types';
 import { sendSms } from '@/lib/sms';
 import { createMessageLog } from '@/lib/db';
@@ -82,12 +82,11 @@ export function SendSmsToMembersDialog({ open, onOpenChange, selectedMembers, on
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Message</Label>
-            <Input
+            <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your message..."
               className="min-h-[100px]"
-              as="textarea"
             />
             <p className="text-xs text-muted-foreground">
               {message.length} characters
