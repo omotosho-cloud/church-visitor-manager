@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createMember, updateMember } from '@/lib/db';
+import { createMember, updateMember, uploadPhoto } from '@/lib/db';
 import { Member, MembershipStatus, MemberCategory, MaritalStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { validatePhone } from '@/lib/utils';
 import { MESSAGES } from '@/lib/constants';
+import { ImageUpload } from '@/components/image-upload';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -52,6 +53,10 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     notes: ''
   });
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [anniversaryPhotoFile, setAnniversaryPhotoFile] = useState<File | null>(null);
+  const [anniversaryPhotoUrl, setAnniversaryPhotoUrl] = useState<string>('');
 
   useEffect(() => {
     if (editMember) {
@@ -71,6 +76,8 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         join_date: editMember.join_date || new Date().toISOString().split('T')[0],
         notes: editMember.notes || ''
       });
+      setPhotoUrl(editMember.photo || '');
+      setAnniversaryPhotoUrl(editMember.anniversary_photo || '');
     } else {
       setFormData({
         name: '',
@@ -88,6 +95,10 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         join_date: new Date().toISOString().split('T')[0],
         notes: ''
       });
+      setPhotoUrl('');
+      setPhotoFile(null);
+      setAnniversaryPhotoUrl('');
+      setAnniversaryPhotoFile(null);
     }
   }, [editMember, open]);
 
@@ -102,13 +113,27 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     setLoading(true);
 
     try {
+      // Upload photo if selected
+      let uploadedPhotoUrl = photoUrl;
+      if (photoFile) {
+        uploadedPhotoUrl = await uploadPhoto(photoFile, 'member');
+      }
+
+      // Upload anniversary photo if selected
+      let uploadedAnniversaryPhotoUrl = anniversaryPhotoUrl;
+      if (anniversaryPhotoFile) {
+        uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'member');
+      }
+
       const memberData = {
         ...formData,
         marital_status: (formData.marital_status as MaritalStatus) || undefined,
         anniversary_month: formData.anniversary_month ? parseInt(formData.anniversary_month) : undefined,
         anniversary_day: formData.anniversary_day ? parseInt(formData.anniversary_day) : undefined,
+        anniversary_photo: uploadedAnniversaryPhotoUrl || undefined,
         birth_month: formData.birth_month ? parseInt(formData.birth_month) : undefined,
         birth_day: formData.birth_day ? parseInt(formData.birth_day) : undefined,
+        photo: uploadedPhotoUrl || undefined,
       };
 
       if (editMember) {
@@ -198,9 +223,20 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                 </SelectContent>
               </Select>
             </div>
-            {formData.marital_status === 'married' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Preferred Birthday Photo</label>
+              <ImageUpload
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                onFileSelect={setPhotoFile}
+              />
+            </div>
+          </div>
+
+          {formData.marital_status === 'married' && (
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="anniversary_month">Anniversary Month</Label>
+                <label className="text-sm font-medium" htmlFor="anniversary_month">Anniversary Month</label>
                 <Select value={formData.anniversary_month} onValueChange={(value) => setFormData({ ...formData, anniversary_month: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Month" />
@@ -214,8 +250,16 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                   </SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Preferred Anniversary Photo</label>
+                <ImageUpload
+                  value={anniversaryPhotoUrl}
+                  onChange={setAnniversaryPhotoUrl}
+                  onFileSelect={setAnniversaryPhotoFile}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">

@@ -39,6 +39,7 @@ import { BulkUploadDialog } from '@/components/bulk-upload-dialog';
 import { SendSmsToSelectedDialog } from '@/components/send-sms-to-selected-dialog';
 import { PromoteToMemberDialog } from '@/components/promote-to-member-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { VisitorDetailsDialog } from '@/components/visitor-details-dialog';
 import { getVisitors, deleteVisitor as dbDeleteVisitor, getServices } from '@/lib/db';
 import { Visitor } from '@/lib/types';
 import { format } from 'date-fns';
@@ -67,6 +68,7 @@ export default function VisitorsPage() {
   const [isSendSmsDialogOpen, setIsSendSmsDialogOpen] = useState(false);
   const [promoteVisitor, setPromoteVisitor] = useState<Visitor | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; bulk: boolean } | null>(null);
+  const [viewingVisitor, setViewingVisitor] = useState<Visitor | null>(null);
 
   const fetchVisitors = async () => {
     try {
@@ -354,6 +356,12 @@ export default function VisitorsPage() {
         }
       />
 
+      <VisitorDetailsDialog
+        open={!!viewingVisitor}
+        onOpenChange={(open) => !open && setViewingVisitor(null)}
+        visitor={viewingVisitor}
+      />
+
       <Card>
         <CardHeader className="pb-3">
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -483,11 +491,12 @@ export default function VisitorsPage() {
                   </TableRow>
                 ) : (
                   paginatedVisitors.map((visitor) => (
-                    <TableRow key={visitor.id}>
+                    <TableRow key={visitor.id} className="cursor-pointer" onClick={() => setViewingVisitor(visitor)}>
                       <TableCell>
                         <Checkbox
                           checked={selectedVisitors.includes(visitor.id!)}
                           onCheckedChange={() => toggleSelectVisitor(visitor.id!)}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -513,15 +522,16 @@ export default function VisitorsPage() {
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditingVisitor(visitor)}>Edit Details</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setPromoteVisitor(visitor)}>Promote to Member</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteVisitor(visitor.id || '')}>Delete</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setViewingVisitor(visitor); }}>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingVisitor(visitor); }}>Edit Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPromoteVisitor(visitor); }}>Promote to Member</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); deleteVisitor(visitor.id || ''); }}>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

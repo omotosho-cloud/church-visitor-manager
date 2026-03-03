@@ -77,7 +77,7 @@ export function PromoteToMemberDialog({ open, onOpenChange, visitor, onSuccess }
             />
           </div>
           <div className="space-y-2">
-            <Label>Address (Optional)</Label>
+            <Label>Address </Label>
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}

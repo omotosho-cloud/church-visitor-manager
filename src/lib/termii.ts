@@ -1,4 +1,4 @@
-const TERMII_API_URL = 'https://api.ng.termii.com/api/sms/send';
+const TERMII_API_URL = 'https://v3.api.termii.com/api/sms/send';
 
 export interface SmsPayload {
   to: string;
@@ -11,7 +11,7 @@ export interface SmsPayload {
 
 export const sendSms = async (phone: string, message: string) => {
   const apiKey = process.env.TERMII_API_KEY;
-  const senderId = process.env.TERMII_SENDER_ID || 'RCCGVC';
+  const senderId = process.env.TERMII_SENDER_ID || 'VICTORYCNTR';
 
   if (!apiKey) {
     console.error('Termii API Key is missing');
@@ -46,7 +46,7 @@ export const sendSms = async (phone: string, message: string) => {
 
     const data = await response.json();
     
-    if (response.ok && data.message === 'Successfully Sent') {
+    if (response.ok && data.message_id) {
       return { success: true, data };
     } else {
       console.error('Termii Error:', data);

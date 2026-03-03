@@ -14,9 +14,12 @@ export interface Visitor {
   marital_status?: MaritalStatus;
   anniversary_month?: number;
   anniversary_day?: number;
+  anniversary_photo?: string;
   birth_month?: number;
   birth_day?: number;
+  address?: string;
   service?: string;
+  photo?: string;
   notes?: string;
   created_at?: string;
 }
@@ -30,6 +33,7 @@ export interface Member {
   marital_status?: MaritalStatus;
   anniversary_month?: number;
   anniversary_day?: number;
+  anniversary_photo?: string;
   birth_month?: number;
   birth_day?: number;
   address?: string;

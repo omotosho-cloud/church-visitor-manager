@@ -14,8 +14,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { AddMemberDialog } from '@/components/add-member-dialog';
 import { SendSmsToMembersDialog } from '@/components/send-sms-to-members-dialog';
 import { BulkUploadMembersDialog } from '@/components/bulk-upload-members-dialog';
-import { ViewMemberDialog } from '@/components/view-member-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { MemberDetailsDialog } from '@/components/member-details-dialog';
 import { getMembers, deleteMember as dbDeleteMember } from '@/lib/db';
 import { Member } from '@/lib/types';
 import { format } from 'date-fns';
@@ -251,7 +251,7 @@ return (
         onSuccess={fetchMembers}
       />
 
-      <ViewMemberDialog
+      <MemberDetailsDialog
         open={!!viewingMember}
         onOpenChange={(open) => !open && setViewingMember(null)}
         member={viewingMember}
@@ -398,11 +398,12 @@ return (
                   </TableRow>
                 ) : (
                   paginatedMembers.map((member) => (
-                    <TableRow key={member.id}>
+                    <TableRow key={member.id} className="cursor-pointer" onClick={() => setViewingMember(member)}>
                       <TableCell>
                         <Checkbox
                           checked={selectedMembers.includes(member.id!)}
                           onCheckedChange={() => toggleSelectMember(member.id!)}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -430,15 +431,15 @@ return (
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setViewingMember(member)}>View Details</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setEditingMember(member)}>Edit Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteMember(member.id || '')}>Delete</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setViewingMember(member); }}>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingMember(member); }}>Edit Details</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); deleteMember(member.id || ''); }}>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

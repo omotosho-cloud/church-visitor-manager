@@ -1,27 +1,18 @@
-// Termii WhatsApp uses template-based messaging
-// Note: You need to create and approve templates in your Termii dashboard first
-const TERMII_WHATSAPP_URL = 'https://api.ng.termii.com/api/send/template';
+const TERMII_WHATSAPP_URL = 'https://v3.api.termii.com/api/send/whatsapp';
 
 export const sendWhatsApp = async (phone: string, message: string) => {
   const apiKey = process.env.TERMII_API_KEY;
-  const deviceId = process.env.TERMII_DEVICE_ID; // Required for WhatsApp
-  const templateId = process.env.TERMII_WHATSAPP_TEMPLATE_ID; // Your approved template ID
 
   if (!apiKey) {
     console.error('Termii API Key is missing');
     return { success: false, message: 'API Key missing' };
   }
 
-  if (!deviceId || !templateId) {
-    console.error('Termii WhatsApp requires TERMII_DEVICE_ID and TERMII_WHATSAPP_TEMPLATE_ID');
-    return { success: false, message: 'WhatsApp configuration incomplete' };
-  }
-
-  // Format phone number with country code
+  // Format Nigerian phone number (ensure it starts with 234)
   let formattedPhone = phone.trim();
   if (formattedPhone.startsWith('0')) {
     formattedPhone = '234' + formattedPhone.slice(1);
-  } else if (!formattedPhone.startsWith('234') && !formattedPhone.startsWith('+')) {
+  } else if (!formattedPhone.startsWith('234')) {
     formattedPhone = '234' + formattedPhone;
   }
 
@@ -33,19 +24,15 @@ export const sendWhatsApp = async (phone: string, message: string) => {
       },
       body: JSON.stringify({
         api_key: apiKey,
-        phone_number: formattedPhone,
-        device_id: deviceId,
-        template_id: templateId,
-        data: {
-          product_name: 'Church Visitor Manager',
-          message: message,
-        },
+        to: formattedPhone,
+        type: 'plain',
+        body: message,
       }),
     });
 
     const data = await response.json();
     
-    if (response.ok && (data.code === 'ok' || data.message === 'Successfully Sent')) {
+    if (response.ok && data.message_id) {
       return { success: true, data };
     } else {
       console.error('Termii WhatsApp Error:', data);
