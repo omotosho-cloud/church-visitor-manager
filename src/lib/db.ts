@@ -229,6 +229,22 @@ export const uploadFile = async (file: File) => {
   return { url: publicUrl };
 };
 
+// Upload profile photo
+export const uploadPhoto = async (file: File, type: 'visitor' | 'member') => {
+  const fileName = `${type}s/${Date.now()}_${file.name}`;
+  const { data, error } = await supabase.storage
+    .from('photos')
+    .upload(fileName, file);
+  
+  if (error) throw error;
+  
+  const { data: { publicUrl } } = supabase.storage
+    .from('photos')
+    .getPublicUrl(fileName);
+  
+  return publicUrl;
+};
+
 // Members
 export const getMembers = async () => {
   const { data, error } = await supabase
@@ -285,8 +301,13 @@ export const promoteVisitorToMember = async (visitorId: string, additionalData: 
     name: visitor.name,
     phone: visitor.phone,
     gender: visitor.gender,
+    marital_status: visitor.marital_status,
+    anniversary_month: visitor.anniversary_month,
+    anniversary_day: visitor.anniversary_day,
+    anniversary_photo: visitor.anniversary_photo,
     birth_month: visitor.birth_month,
     birth_day: visitor.birth_day,
+    photo: visitor.photo,
     membership_status: 'active',
     category: 'adult',
     join_date: new Date().toISOString().split('T')[0],

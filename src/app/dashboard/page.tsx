@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Member[]>([]);
+  const [upcomingAnniversaries, setUpcomingAnniversaries] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -25,10 +26,26 @@ export default function DashboardPage() {
         const logItems = await getMessageLogs();
         const birthdays = await getUpcomingBirthdays(7);
         
+        // Get upcoming anniversaries
+        const today = new Date();
+        const anniversaries = memberItems.filter(m => {
+          if (!m.anniversary_month || !m.anniversary_day) return false;
+          const thisYear = today.getFullYear();
+          const anniversary = new Date(thisYear, m.anniversary_month - 1, m.anniversary_day);
+          if (anniversary < today) anniversary.setFullYear(thisYear + 1);
+          const daysUntil = Math.ceil((anniversary.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntil >= 0 && daysUntil <= 7;
+        }).sort((a, b) => {
+          const aDate = new Date(today.getFullYear(), a.anniversary_month! - 1, a.anniversary_day!);
+          const bDate = new Date(today.getFullYear(), b.anniversary_month! - 1, b.anniversary_day!);
+          return aDate.getTime() - bDate.getTime();
+        });
+        
         setVisitors(visitorItems);
         setMembers(memberItems);
         setLogs(logItems);
         setUpcomingBirthdays(birthdays);
+        setUpcomingAnniversaries(anniversaries);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -187,6 +204,34 @@ export default function DashboardPage() {
                       <Badge variant="outline">🎂</Badge>
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(2000, member.birth_month! - 1, member.birth_day!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Anniversaries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {upcomingAnniversaries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No anniversaries in the next 7 days</p>
+            ) : (
+              <div className="space-y-4">
+                {upcomingAnniversaries.slice(0, 5).map((member) => (
+                  <div key={member.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-muted-foreground">{member.phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline">💍</Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(2000, member.anniversary_month! - 1, member.anniversary_day!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
                   </div>

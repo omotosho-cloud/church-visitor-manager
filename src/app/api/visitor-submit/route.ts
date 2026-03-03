@@ -5,7 +5,7 @@ import { sendSms } from '@/lib/sms';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, phone, gender, service, notes } = body;
+    const { name, phone, gender, marital_status, anniversary_month, anniversary_day, anniversary_photo, birth_month, birth_day, photo, address, service, notes } = body;
 
     if (!name || !phone || !gender) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -19,7 +19,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Create visitor
-    const visitorData = await createVisitor({ name, phone, gender, service, notes });
+    const visitorData = await createVisitor({ 
+      name, 
+      phone, 
+      gender, 
+      marital_status, 
+      anniversary_month, 
+      anniversary_day, 
+      anniversary_photo, 
+      birth_month, 
+      birth_day, 
+      photo, 
+      address,
+      service, 
+      notes 
+    });
 
     // Send instant SMS if template exists
     try {

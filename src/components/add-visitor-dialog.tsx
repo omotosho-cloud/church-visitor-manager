@@ -31,10 +31,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, createMessageLog, createQueuedMessage } from '@/lib/db';
+import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, createMessageLog, createQueuedMessage, uploadPhoto } from '@/lib/db';
 import { toast } from 'sonner';
 import { sendSms } from '@/lib/sms';
 import {  Visitor, MaritalStatus } from '@/lib/types';
+import { ImageUpload } from '@/components/image-upload';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -45,6 +46,7 @@ const formSchema = z.object({
   anniversary_day: z.string().optional(),
   birth_month: z.string().optional(),
   birth_day: z.string().optional(),
+  address: z.string().optional(),
   service: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -61,6 +63,10 @@ interface AddVisitorDialogProps {
 export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }: AddVisitorDialogProps) {
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState<string[]>(['Sunday Morning', 'Sunday Evening', 'Wednesday Service', 'Friday Service']);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [anniversaryPhotoFile, setAnniversaryPhotoFile] = useState<File | null>(null);
+  const [anniversaryPhotoUrl, setAnniversaryPhotoUrl] = useState<string>('');
 
   useEffect(() => {
     const fetchServicesData = async () => {
@@ -85,6 +91,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
       anniversary_day: '',
       birth_month: '',
       birth_day: '',
+      address: '',
       service: '',
       notes: '',
     },
@@ -101,9 +108,12 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         anniversary_day: editVisitor.anniversary_day?.toString() || '',
         birth_month: editVisitor.birth_month?.toString() || '',
         birth_day: editVisitor.birth_day?.toString() || '',
+        address: editVisitor.address || '',
         service: editVisitor.service || '',
         notes: editVisitor.notes || '',
       });
+      setPhotoUrl(editVisitor.photo || '');
+      setAnniversaryPhotoUrl(editVisitor.anniversary_photo || '');
     } else {
       form.reset({
         name: '',
@@ -114,9 +124,14 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         anniversary_day: '',
         birth_month: '',
         birth_day: '',
+        address: '',
         service: '',
         notes: '',
       });
+      setPhotoUrl('');
+      setPhotoFile(null);
+      setAnniversaryPhotoUrl('');
+      setAnniversaryPhotoFile(null);
     }
   }, [editVisitor, form]);
 
@@ -133,6 +148,18 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         return;
       }
 
+      // Upload photo if selected
+      let uploadedPhotoUrl = photoUrl;
+      if (photoFile) {
+        uploadedPhotoUrl = await uploadPhoto(photoFile, 'visitor');
+      }
+
+      // Upload anniversary photo if selected
+      let uploadedAnniversaryPhotoUrl = anniversaryPhotoUrl;
+      if (anniversaryPhotoFile) {
+        uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'visitor');
+      }
+
       // Convert birth_month and birth_day to numbers
       const visitorData = {
         name: values.name,
@@ -141,9 +168,12 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
         marital_status: (values.marital_status as MaritalStatus) || undefined,
         anniversary_month: values.anniversary_month ? parseInt(values.anniversary_month) : undefined,
         anniversary_day: values.anniversary_day ? parseInt(values.anniversary_day) : undefined,
+        anniversary_photo: uploadedAnniversaryPhotoUrl || undefined,
         birth_month: values.birth_month ? parseInt(values.birth_month) : undefined,
         birth_day: values.birth_day ? parseInt(values.birth_day) : undefined,
+        address: values.address || undefined,
         service: values.service,
+        photo: uploadedPhotoUrl || undefined,
         notes: values.notes,
       };
 
@@ -361,7 +391,17 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                   </FormItem>
                 )}
               />
-              {form.watch('marital_status') === 'married' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Preferred Birthday Photo</label>
+                <ImageUpload
+                  value={photoUrl}
+                  onChange={setPhotoUrl}
+                  onFileSelect={setPhotoFile}
+                />
+              </div>
+            </div>
+            {form.watch('marital_status') === 'married' && (
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="anniversary_month"
@@ -393,8 +433,16 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Preferred Anniversary Photo</label>
+                  <ImageUpload
+                    value={anniversaryPhotoUrl}
+                    onChange={setAnniversaryPhotoUrl}
+                    onFileSelect={setAnniversaryPhotoFile}
+                  />
+                </div>
+              </div>
+            )}
             {form.watch('marital_status') === 'married' && (
               <FormField
                 control={form.control}
@@ -437,6 +485,19 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }: { field: ControllerRenderProps<FormValues, 'address'> }) => (
+                <FormItem>
+                  <FormLabel>Address </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Home address" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
