@@ -32,7 +32,7 @@ export default function LoginPage() {
       } else {
         await signIn(email, password);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(isSignUp ? 'Failed to create account' : 'Invalid email or password');
     } finally {
       setIsLoading(false);
@@ -48,7 +48,7 @@ export default function LoginPage() {
       <Toaster position="top-right" richColors />
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold text-primary">RCCG Victory Center</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary">RCCG Victory Centre</CardTitle>
           <CardDescription>
             {isSignUp ? 'Create Admin Account' : 'Admin Portal - Sign In'}
           </CardDescription>

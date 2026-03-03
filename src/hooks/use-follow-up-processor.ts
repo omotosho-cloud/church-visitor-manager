@@ -36,7 +36,7 @@ export function useFollowUpProcessor() {
       const visitor = await getVisitor(item.visitor_id);
       const template = await getTemplate(item.template_id);
       
-      const churchName = "RCCG Victory Center";
+      const churchName = "RCCG Victory Centre";
       const message = template.message
           .replace(/{{name}}/g, visitor.name)
           .replace(/{{church_name}}/g, churchName)

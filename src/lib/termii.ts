@@ -31,7 +31,7 @@ export const sendSms = async (phone: string, message: string) => {
     sms: message,
     from: senderId,
     type: 'plain',
-    channel: 'dnd', // DND channel is usually more reliable for Nigeria
+    channel: 'generic', // Changed from 'dnd' to 'generic'
     api_key: apiKey,
   };
 

@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata = {
-  title: "RCCG Victory Center - Visitor Management",
+  title: "RCCG Victory Centre - Visitor Management",
   description: "Production messaging system for new church visitors.",
 };
 

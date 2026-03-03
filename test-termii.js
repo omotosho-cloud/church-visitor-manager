@@ -1,23 +1,53 @@
-const API_KEY = 'TLhmZjIBpIpoMcPJwhaUwwhmFQWrdjDuVlrIqRobdTIYpZGJXvsRlFtARNexPD';
-const SENDER_ID = 'Termii'; // Use generic sender until VICTORYCNTR is approved
+const API_KEY = 'TLzYSCqFJjdgVJGqykHrqYogeSMVCpAPyaVKOWybLngJxCUleRdQDalIXZzlTm';
+const SENDER_ID = 'VICTORYCNTR'; // Your registered sender ID
+const GENERIC_SENDER = 'N-Alert'; // Generic fallback
 
-// Test SMS
+// Check balance
+async function checkBalance() {
+  console.log('\n💰 Checking Balance...');
+  const response = await fetch(`https://v3.api.termii.com/api/get-balance?api_key=${API_KEY}`);
+  const data = await response.json();
+  console.log('Balance:', data);
+  return data;
+}
+
+// Test SMS with custom sender
 async function testSMS(phone) {
-  console.log('\n🔵 Testing SMS...');
+  console.log('\n🔵 Testing SMS with VICTORYCNTR (generic channel)...');
   const response = await fetch('https://v3.api.termii.com/api/sms/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       to: phone,
       from: SENDER_ID,
-      sms: 'Test message from Church Visitor Manager',
+      sms: 'Hi ayobami obaloluwa, welcome to victory centre! We are glad you joined our Sunday service.',
       type: 'plain',
-      channel: 'dnd',
+      channel: 'generic',
       api_key: API_KEY,
     }),
   });
   const data = await response.json();
   console.log('SMS Response:', data);
+  return data;
+}
+
+// Test SMS with generic sender
+async function testGenericSMS(phone) {
+  console.log('\n🔵 Testing SMS with Generic Sender...');
+  const response = await fetch('https://v3.api.termii.com/api/sms/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: phone,
+      from: GENERIC_SENDER,
+      sms: 'Test message from Church Visitor Manager',
+      type: 'plain',
+      channel: 'generic',
+      api_key: API_KEY,
+    }),
+  });
+  const data = await response.json();
+  console.log('Generic SMS Response:', data);
   return data;
 }
 
@@ -64,6 +94,8 @@ console.log('API Key:', API_KEY?.slice(0, 10) + '...');
 console.log('Sender ID:', SENDER_ID);
 
 (async () => {
+  await checkBalance();
   await testSMS(phone);
-  await testWhatsApp(phone);
+  // await testGenericSMS(phone);
+  // await testWhatsApp(phone);
 })();
