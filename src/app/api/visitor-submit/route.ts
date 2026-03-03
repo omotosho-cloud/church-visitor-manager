@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       const instantTemplate = templates.find(t => t.trigger_type === 'instant');
 
       if (instantTemplate) {
-        const churchName = "RCCG Victory Center";
+        const churchName = "RCCG Victory Centre";
         const message = instantTemplate.message
           .replace(/{{name}}/g, name)
           .replace(/{{church_name}}/g, churchName)

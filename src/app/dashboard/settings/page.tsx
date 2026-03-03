@@ -15,7 +15,7 @@ import { Toaster } from 'sonner';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
-    church_name: 'RCCG Victory Center',
+    church_name: 'RCCG Victory Centre',
     theme_color: '#008800',
     sender_id: 'RCCGVC',
     automation_enabled: true,

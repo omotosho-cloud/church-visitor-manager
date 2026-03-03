@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/select';
 import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, createMessageLog, createQueuedMessage, uploadPhoto } from '@/lib/db';
 import { toast } from 'sonner';
-import { sendSms } from '@/lib/sms';
 import {  Visitor, MaritalStatus } from '@/lib/types';
 import { ImageUpload } from '@/components/image-upload';
 
@@ -196,24 +195,29 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
           const instantTemplate = templates.find(t => t.trigger_type === 'instant');
 
           if (instantTemplate) {
-              const churchName = "RCCG Victory Center"; 
+              const churchName = "RCCG Victory Centre"; 
               const message = instantTemplate.message
                   .replace(/{{name}}/g, values.name)
                   .replace(/{{church_name}}/g, churchName)
                   .replace(/{{service_attended}}/g, values.service || 'our');
               
-              const result = await sendSms(values.phone, message);
+              const result = await fetch('/api/send-message', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ phone: values.phone, message }),
+              });
+              const smsResult = await result.json();
               
               await createMessageLog({
                   visitor_id: visitor.id,
                   visitor_name: values.name,
                   phone: values.phone,
                   message,
-                  status: result.success ? 'sent' : 'failed',
-                  provider_response: 'results' in result ? result.results : undefined,
+                  status: smsResult.success ? 'sent' : 'failed',
+                  provider_response: 'results' in smsResult ? smsResult.results : undefined,
               });
 
-              if (result.success) {
+              if (smsResult.success) {
                   toast.success('Welcome SMS sent automatically!');
               } else {
                   toast.warning('Visitor saved, but welcome SMS failed.');

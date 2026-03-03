@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     for (const row of rows) {
       try {
         const values = row.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const visitor: any = {};
 
         headers.forEach((header, index) => {
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
           const instantTemplate = templates.find(t => t.trigger_type === 'instant');
 
           if (instantTemplate) {
-            const churchName = "RCCG Victory Center";
+            const churchName = "RCCG Victory Centre";
             const message = instantTemplate.message
               .replace(/{{name}}/g, visitor.name)
               .replace(/{{church_name}}/g, churchName)

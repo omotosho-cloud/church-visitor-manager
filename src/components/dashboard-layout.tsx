@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [settings, setSettings] = useState<SettingsType>({ church_name: 'RCCG Victory Center', theme_color: '#008800', sender_id: 'RCCGVC', automation_enabled: true });
+  const [settings, setSettings] = useState<SettingsType>({ church_name: 'RCCG Victory Centre', theme_color: '#008800', sender_id: 'RCCGVC', automation_enabled: true });
 
   useEffect(() => {
     const fetchSettingsData = async () => {
