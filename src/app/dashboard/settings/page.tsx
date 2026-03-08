@@ -211,14 +211,15 @@ export default function SettingsPage() {
                 <Label htmlFor="whatsapp-provider">WhatsApp Provider</Label>
                 <Select 
                   value={settings.whatsapp_provider || 'termii-whatsapp'} 
-                  onValueChange={(value: 'twilio-whatsapp' | 'termii-whatsapp') => setSettings({ ...settings, whatsapp_provider: value })}
+                  onValueChange={(value: 'twilio-whatsapp' | 'termii-whatsapp' | 'meta-whatsapp') => setSettings({ ...settings, whatsapp_provider: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="termii-whatsapp">Termii WhatsApp </SelectItem>
-                    <SelectItem value="twilio-whatsapp">Twilio WhatsApp </SelectItem>
+                    <SelectItem value="meta-whatsapp">Meta (Official - Free Tier)</SelectItem>
+                    <SelectItem value="twilio-whatsapp">Twilio WhatsApp</SelectItem>
+                    <SelectItem value="termii-whatsapp">Termii WhatsApp</SelectItem>
                   </SelectContent>
                 </Select>              
               </div>
@@ -240,6 +241,16 @@ export default function SettingsPage() {
               <Switch 
                 checked={settings.automation_enabled}
                 onCheckedChange={(checked: boolean) => setSettings({ ...settings, automation_enabled: checked })}
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
+              <div className="space-y-0.5">
+                <Label className="text-base">Member Welcome Messages</Label>
+                <p className="text-sm text-muted-foreground">Send congratulations SMS with profile edit link to new members.</p>
+              </div>
+              <Switch 
+                checked={settings.member_welcome_enabled ?? false}
+                onCheckedChange={(checked: boolean) => setSettings({ ...settings, member_welcome_enabled: checked })}
               />
             </div>
           </CardContent>

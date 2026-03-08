@@ -266,9 +266,12 @@ export const getMember = async (id: string) => {
 };
 
 export const createMember = async (member: Omit<Member, 'id' | 'created_at'>) => {
+  // Generate unique profile token
+  const profile_token = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  
   const { data, error } = await supabase
     .from('members')
-    .insert(member)
+    .insert({ ...member, profile_token })
     .select()
     .single();
   if (error) throw error;
@@ -292,6 +295,27 @@ export const deleteMember = async (id: string) => {
     .delete()
     .eq('id', id);
   if (error) throw error;
+};
+
+export const getMemberByToken = async (token: string) => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('profile_token', token)
+    .single();
+  if (error) throw error;
+  return data as Member;
+};
+
+export const updateMemberByToken = async (token: string, member: Partial<Member>) => {
+  const { data, error } = await supabase
+    .from('members')
+    .update(member)
+    .eq('profile_token', token)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Member;
 };
 
 export const promoteVisitorToMember = async (visitorId: string, additionalData: Partial<Member>) => {

@@ -1,4 +1,4 @@
-const API_KEY = 'TLzYSCqFJjdgVJGqykHrqYogeSMVCpAPyaVKOWybLngJxCUleRdQDalIXZzlTm';
+const API_KEY = 'TLhmZjIBpIpoMcPJwhaUwwhmFQWrdjDuVlrIqRobdTIYpZGJXvsRlFtARNexPD';
 const SENDER_ID = 'VICTORYCNTR'; // Your registered sender ID
 const GENERIC_SENDER = 'N-Alert'; // Generic fallback
 
@@ -40,7 +40,7 @@ async function testGenericSMS(phone) {
     body: JSON.stringify({
       to: phone,
       from: GENERIC_SENDER,
-      sms: 'Test message from Church Visitor Manager',
+      sms: 'Hi ayobami obaloluwa, welcome to victory centre! We are glad you joined our Sunday service.',
       type: 'plain',
       channel: 'generic',
       api_key: API_KEY,

@@ -1,4 +1,4 @@
-export type TriggerType = 'instant' | 'delay' | 'scheduled' | 'birthday';
+export type TriggerType = 'instant' | 'delay' | 'scheduled' | 'birthday' | 'member_welcome' | 'anniversary';
 export type MessageStatus = 'pending' | 'sent' | 'failed';
 export type AdminRole = 'admin';
 export type AuthProvider = 'google' | 'email';
@@ -42,6 +42,7 @@ export interface Member {
   membership_status: MembershipStatus;
   category: MemberCategory;
   notes?: string;
+  profile_token?: string;
   created_at?: string;
 }
 
@@ -92,7 +93,8 @@ export interface Settings {
   theme_color: string;
   sender_id: string;
   automation_enabled: boolean;
+  member_welcome_enabled?: boolean;
   sms_provider?: 'termii' | 'twilio';
-  whatsapp_provider?: 'twilio-whatsapp' | 'termii-whatsapp';
+  whatsapp_provider?: 'twilio-whatsapp' | 'termii-whatsapp' | 'meta-whatsapp';
   message_channel?: 'sms' | 'whatsapp' | 'both';
 }

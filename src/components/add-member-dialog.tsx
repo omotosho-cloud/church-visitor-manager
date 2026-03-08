@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createMember, updateMember, uploadPhoto } from '@/lib/db';
+import { createMember, updateMember, uploadPhoto, getMembers } from '@/lib/db';
 import { Member, MembershipStatus, MemberCategory, MaritalStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { validatePhone } from '@/lib/utils';
@@ -113,6 +113,18 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     setLoading(true);
 
     try {
+      // Check for duplicate phone number
+      const allMembers = await getMembers();
+      const duplicate = allMembers.find(
+        (m) => m.phone === formData.phone && m.id !== editMember?.id
+      );
+      
+      if (duplicate) {
+        toast.error('Phone number already registered to another member');
+        setLoading(false);
+        return;
+      }
+
       // Upload photo if selected
       let uploadedPhotoUrl = photoUrl;
       if (photoFile) {
@@ -140,8 +152,22 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         await updateMember(editMember.id!, memberData);
         toast.success(MESSAGES.SUCCESS.MEMBER_UPDATED);
       } else {
-        await createMember(memberData);
+        const newMember = await createMember(memberData);
         toast.success(MESSAGES.SUCCESS.MEMBER_ADDED);
+        
+        // Send welcome message
+        if (newMember.profile_token) {
+          await fetch('/api/send-member-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              memberId: newMember.id,
+              memberName: newMember.name,
+              phone: newMember.phone,
+              profileToken: newMember.profile_token,
+            }),
+          });
+        }
       }
       
       onSuccess();

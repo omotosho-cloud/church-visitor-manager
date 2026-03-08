@@ -33,11 +33,12 @@ import {
 import { createTemplate, updateTemplate } from '@/lib/db';
 import { toast } from 'sonner';
 import { Template } from '@/lib/types';
+import { ControllerRenderProps } from 'react-hook-form';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   message: z.string().min(10, 'Message body is too short'),
-  trigger_type: z.enum(['instant', 'delay', 'scheduled', 'birthday']),
+  trigger_type: z.enum(['instant', 'delay', 'scheduled', 'birthday', 'member_welcome', 'anniversary']),
   delay_days: z.number().min(0).optional(),
 });
 
@@ -105,7 +106,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
         <DialogHeader>
           <DialogTitle>{editTemplate ? 'Edit Template' : 'Create Message Template'}</DialogTitle>
           <DialogDescription>
-            Design an automated message structure. Use {"{{name}}"}, {"{{church_name}}"}, and {"{{service_attended}}"} as variables.
+            Design an automated message structure. Use {"{{name}}"}, {"{{church_name}}"}, {"{{profile_link}}"} (member welcome only), and {"{{service_attended}}"} as variables.
           </DialogDescription>
         </DialogHeader>
 
@@ -114,7 +115,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
             <FormField
               control={form.control}
               name="name"
-              render={({ field }: { field: any }) => (
+              render={({ field }: { field: ControllerRenderProps<FormValues, 'name'> }) => (
                 <FormItem>
                   <FormLabel>Template Name</FormLabel>
                   <FormControl>
@@ -127,7 +128,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
             <FormField
               control={form.control}
               name="message"
-              render={({ field }: { field: any }) => (
+              render={({ field }: { field: ControllerRenderProps<FormValues, 'message'> }) => (
                 <FormItem>
                   <FormLabel>Message Body</FormLabel>
                   <FormControl>
@@ -148,7 +149,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
               <FormField
                 control={form.control}
                 name="trigger_type"
-                render={({ field }: { field: any }) => (
+                render={({ field }: { field: ControllerRenderProps<FormValues, 'trigger_type'> }) => (
                   <FormItem>
                     <FormLabel>Trigger Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -162,6 +163,8 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
                         <SelectItem value="delay">Delay (Follow-up)</SelectItem>
                         <SelectItem value="scheduled">Scheduled</SelectItem>
                         <SelectItem value="birthday">Birthday</SelectItem>
+                        <SelectItem value="anniversary">Anniversary</SelectItem>
+                        <SelectItem value="member_welcome">Member Welcome</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -172,7 +175,7 @@ export function AddTemplateDialog({ open, onOpenChange, onSuccess, editTemplate 
                 <FormField
                   control={form.control}
                   name="delay_days"
-                  render={({ field }: { field: any }) => (
+                  render={({ field }: { field: ControllerRenderProps<FormValues, 'delay_days'> }) => (
                     <FormItem>
                       <FormLabel>Delay (Days)</FormLabel>
                       <FormControl>
