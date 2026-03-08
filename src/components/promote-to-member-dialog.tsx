@@ -28,13 +28,28 @@ export function PromoteToMemberDialog({ open, onOpenChange, visitor, onSuccess }
     
     setLoading(true);
     try {
-      await promoteVisitorToMember(visitor.id!, {
+      const member = await promoteVisitorToMember(visitor.id!, {
         category,
         email: email || undefined,
         address: address || undefined,
       });
       
       toast.success(`${visitor.name} has been promoted to member!`);
+      
+      // Send welcome message
+      if (member.profile_token) {
+        await fetch('/api/send-member-welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memberId: member.id,
+            memberName: member.name,
+            phone: member.phone,
+            profileToken: member.profile_token,
+          }),
+        });
+      }
+      
       onSuccess();
       onOpenChange(false);
     } catch (error) {

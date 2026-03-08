@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMember, getMembers } from '@/lib/db';
+import { createMember, getMembers, getSettings, getTemplates } from '@/lib/db';
+import { sendSms } from '@/lib/sms';
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +52,31 @@ export async function POST(req: NextRequest) {
       category: category || 'adult',
       join_date: join_date || new Date().toISOString().split('T')[0],
     });
+
+    // Send welcome message if member has profile_token
+    if (memberData.profile_token) {
+      try {
+        const settings = await getSettings();
+        
+        if (settings.automation_enabled && settings.member_welcome_enabled) {
+          const templates = await getTemplates();
+          const welcomeTemplate = templates.find(t => t.trigger_type === 'member_welcome');
+          
+          if (welcomeTemplate) {
+            const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/member-profile/${memberData.profile_token}`;
+            
+            const message = welcomeTemplate.message
+              .replace(/\{\{name\}\}/g, memberData.name)
+              .replace(/\{\{church_name\}\}/g, settings.church_name)
+              .replace(/\{\{profile_link\}\}/g, profileUrl);
+
+            await sendSms(memberData.phone, message);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send welcome message:', error);
+      }
+    }
 
     return NextResponse.json({ success: true, member: memberData });
   } catch (error) {

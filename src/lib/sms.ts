@@ -2,10 +2,11 @@ import * as termii from './termii';
 import * as twilio from './twilio';
 import * as twilioWhatsApp from './twilio-whatsapp';
 import * as termiiWhatsApp from './termii-whatsapp';
+import * as metaWhatsApp from './meta-whatsapp';
 import { getSettings } from './db';
 
 export type SmsProvider = 'termii' | 'twilio';
-export type WhatsAppProvider = 'twilio-whatsapp' | 'termii-whatsapp';
+export type WhatsAppProvider = 'twilio-whatsapp' | 'termii-whatsapp' | 'meta-whatsapp';
 export type MessageChannel = 'sms' | 'whatsapp' | 'both';
 
 export interface SmsSettings {
@@ -36,9 +37,14 @@ export const sendSms = async (phone: string, message: string) => {
     // Send WhatsApp
     if (channel === 'whatsapp' || channel === 'both') {
       const whatsappProvider = settings.whatsapp_provider || 'twilio-whatsapp';
-      const whatsappResult = whatsappProvider === 'termii-whatsapp'
-        ? await termiiWhatsApp.sendWhatsApp(phone, message)
-        : await twilioWhatsApp.sendWhatsApp(phone, message);
+      let whatsappResult;
+      if (whatsappProvider === 'termii-whatsapp') {
+        whatsappResult = await termiiWhatsApp.sendWhatsApp(phone, message);
+      } else if (whatsappProvider === 'meta-whatsapp') {
+        whatsappResult = await metaWhatsApp.sendWhatsApp(phone, message);
+      } else {
+        whatsappResult = await twilioWhatsApp.sendWhatsApp(phone, message);
+      }
       results.push({ channel: 'whatsapp', ...whatsappResult });
     }
 
