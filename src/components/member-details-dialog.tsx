@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download } from 'lucide-react';
+import { Download, Copy, Check } from 'lucide-react';
 import { Member } from '@/lib/types';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface MemberDetailsDialogProps {
   open: boolean;
@@ -15,7 +17,11 @@ interface MemberDetailsDialogProps {
 }
 
 export function MemberDetailsDialog({ open, onOpenChange, member }: MemberDetailsDialogProps) {
+  const [copied, setCopied] = useState(false);
+  
   if (!member) return null;
+
+  const profileLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/member-profile/${member.profile_token}`;
 
   const downloadPhoto = async () => {
     if (!member.photo) return;
@@ -29,6 +35,17 @@ export function MemberDetailsDialog({ open, onOpenChange, member }: MemberDetail
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      setCopied(true);
+      toast.success('Profile link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
   };
 
   return (
@@ -146,6 +163,30 @@ export function MemberDetailsDialog({ open, onOpenChange, member }: MemberDetail
               <p className="font-medium">{member.notes}</p>
             </div>
           )}
+          
+          <div className="border-t pt-4">
+            <p className="text-sm text-gray-500 mb-2">Profile Edit Link</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={profileLink}
+                readOnly
+                className="flex-1 px-3 py-2 border rounded-md bg-gray-50 text-sm font-mono"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyToClipboard}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Share this link with the member to allow them to edit their profile</p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

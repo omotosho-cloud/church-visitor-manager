@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, MoreVertical, Filter, ChevronLeft, ChevronRight, X, Download, Send,  } from 'lucide-react';
+import { UserPlus, Search, MoreVertical, Filter, ChevronLeft, ChevronRight, X, Download, Send, Copy } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -147,6 +147,16 @@ export default function MembersPage() {
     }
     
     setDeleteConfirm(null);
+  };
+
+  const shareProfileLink = async (member: Member) => {
+    const profileLink = `${window.location.origin}/member-profile/${member.profile_token}`;
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      toast.success('Profile link copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
   };
 
   const exportToCSV = (selectedOnly = false) => {
@@ -439,6 +449,10 @@ return (
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setViewingMember(member); }}>View Details</DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingMember(member); }}>Edit Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); shareProfileLink(member); }}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Share Profile Link
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); deleteMember(member.id || ''); }}>Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
