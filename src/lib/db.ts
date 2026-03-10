@@ -7,7 +7,7 @@ export const getVisitors = async () => {
     .from('visitors')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch visitors: ${error.message}`);
   return data as Visitor[];
 };
 
@@ -17,7 +17,7 @@ export const getVisitor = async (id: string) => {
     .select('*')
     .eq('id', id)
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Visitor not found: ${error.message}`);
   return data as Visitor;
 };
 
@@ -27,7 +27,7 @@ export const createVisitor = async (visitor: Omit<Visitor, 'id' | 'created_at'>)
     .insert(visitor)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create visitor: ${error.message}`);
   return data as Visitor;
 };
 
@@ -38,7 +38,7 @@ export const updateVisitor = async (id: string, visitor: Partial<Visitor>) => {
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update visitor: ${error.message}`);
   return data as Visitor;
 };
 
@@ -47,7 +47,7 @@ export const deleteVisitor = async (id: string) => {
     .from('visitors')
     .delete()
     .eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(`Failed to delete visitor: ${error.message}`);
 };
 
 // Templates
@@ -56,7 +56,7 @@ export const getTemplates = async () => {
     .from('templates')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch templates: ${error.message}`);
   return data as Template[];
 };
 
@@ -66,7 +66,7 @@ export const getTemplate = async (id: string) => {
     .select('*')
     .eq('id', id)
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Template not found: ${error.message}`);
   return data as Template;
 };
 
@@ -76,7 +76,7 @@ export const createTemplate = async (template: Omit<Template, 'id' | 'created_at
     .insert(template)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create template: ${error.message}`);
   return data as Template;
 };
 
@@ -87,7 +87,7 @@ export const updateTemplate = async (id: string, template: Partial<Template>) =>
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update template: ${error.message}`);
   return data as Template;
 };
 
@@ -96,7 +96,7 @@ export const deleteTemplate = async (id: string) => {
     .from('templates')
     .delete()
     .eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(`Failed to delete template: ${error.message}`);
 };
 
 // Message Logs
@@ -105,7 +105,7 @@ export const getMessageLogs = async () => {
     .from('message_logs')
     .select('*')
     .order('sent_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch message logs: ${error.message}`);
   return data as SmsLog[];
 };
 
@@ -115,7 +115,7 @@ export const createMessageLog = async (log: Omit<SmsLog, 'id' | 'sent_at'>) => {
     .insert(log)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create message log: ${error.message}`);
   return data as SmsLog;
 };
 
@@ -126,7 +126,7 @@ export const getQueuedMessages = async () => {
     .select('*, visitors(name)')
     .eq('status', 'pending')
     .order('scheduled_for', { ascending: true });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch queued messages: ${error.message}`);
   return data.map(item => ({
     ...item,
     visitor_name: item.visitors?.name
@@ -139,7 +139,7 @@ export const createQueuedMessage = async (item: Omit<MessageQueueItem, 'id' | 'c
     .insert(item)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to queue message: ${error.message}`);
   return data as MessageQueueItem;
 };
 
@@ -150,7 +150,7 @@ export const updateQueuedMessage = async (id: string, updates: Partial<MessageQu
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update queued message: ${error.message}`);
   return data as MessageQueueItem;
 };
 
@@ -159,7 +159,7 @@ export const deleteQueuedMessage = async (id: string) => {
     .from('message_queue')
     .delete()
     .eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(`Failed to delete queued message: ${error.message}`);
 };
 
 // Settings
@@ -169,7 +169,7 @@ export const getSettings = async () => {
     .select('*')
     .limit(1)
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch settings: ${error.message}`);
   return data as Settings & { id: string };
 };
 
@@ -181,7 +181,7 @@ export const updateSettings = async (settings: Partial<Settings>) => {
     .eq('id', current.id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update settings: ${error.message}`);
   return data as Settings;
 };
 
@@ -191,7 +191,7 @@ export const getServices = async () => {
     .from('services')
     .select('name')
     .order('created_at', { ascending: true });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch services: ${error.message}`);
   return data.map(s => s.name);
 };
 
@@ -201,7 +201,7 @@ export const createService = async (name: string) => {
     .insert({ name })
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create service: ${error.message}`);
   return data;
 };
 
@@ -210,7 +210,7 @@ export const deleteService = async (name: string) => {
     .from('services')
     .delete()
     .eq('name', name);
-  if (error) throw error;
+  if (error) throw new Error(`Failed to delete service: ${error.message}`);
 };
 
 // File Upload (using Supabase Storage)
@@ -220,7 +220,7 @@ export const uploadFile = async (file: File) => {
     .from('logos')
     .upload(fileName, file);
   
-  if (error) throw error;
+  if (error) throw new Error(`Logo upload failed: ${error.message}`);
   
   const { data: { publicUrl } } = supabase.storage
     .from('logos')
@@ -231,12 +231,26 @@ export const uploadFile = async (file: File) => {
 
 // Upload profile photo
 export const uploadPhoto = async (file: File, type: 'visitor' | 'member') => {
+  if (!file) throw new Error('No file selected');
+  
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    throw new Error('File size exceeds 5MB limit');
+  }
+
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    throw new Error('Invalid file type. Please upload an image (JPEG, PNG, GIF, or WebP)');
+  }
+
   const fileName = `${type}s/${Date.now()}_${file.name}`;
   const { data, error } = await supabase.storage
     .from('photos')
     .upload(fileName, file);
   
-  if (error) throw error;
+  if (error) {
+    throw new Error(`Photo upload failed: ${error.message}`);
+  }
   
   const { data: { publicUrl } } = supabase.storage
     .from('photos')
@@ -251,7 +265,7 @@ export const getMembers = async () => {
     .from('members')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw new Error(`Failed to fetch members: ${error.message}`);
   return data as Member[];
 };
 
@@ -261,7 +275,7 @@ export const getMember = async (id: string) => {
     .select('*')
     .eq('id', id)
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Member not found: ${error.message}`);
   return data as Member;
 };
 
@@ -274,7 +288,7 @@ export const createMember = async (member: Omit<Member, 'id' | 'created_at'>) =>
     .insert({ ...member, profile_token })
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to create member: ${error.message}`);
   return data as Member;
 };
 
@@ -285,7 +299,7 @@ export const updateMember = async (id: string, member: Partial<Member>) => {
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update member: ${error.message}`);
   return data as Member;
 };
 
@@ -294,7 +308,7 @@ export const deleteMember = async (id: string) => {
     .from('members')
     .delete()
     .eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(`Failed to delete member: ${error.message}`);
 };
 
 export const getMemberByToken = async (token: string) => {
@@ -303,7 +317,7 @@ export const getMemberByToken = async (token: string) => {
     .select('*')
     .eq('profile_token', token)
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Member profile not found: ${error.message}`);
   return data as Member;
 };
 
@@ -314,7 +328,7 @@ export const updateMemberByToken = async (token: string, member: Partial<Member>
     .eq('profile_token', token)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(`Failed to update member profile: ${error.message}`);
   return data as Member;
 };
 

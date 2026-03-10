@@ -35,6 +35,7 @@ import { getServices, createVisitor, updateVisitor, getVisitors, getTemplates, c
 import { toast } from 'sonner';
 import {  Visitor, MaritalStatus } from '@/lib/types';
 import { ImageUpload } from '@/components/image-upload';
+import { validatePhone } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -134,7 +135,31 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
     }
   }, [editVisitor, form]);
 
+  const validateFormFields = (values: FormValues): boolean => {
+    if (!values.name?.trim()) {
+      toast.error('Full Name is required');
+      return false;
+    }
+    if (!values.phone?.trim()) {
+      toast.error('Phone Number is required');
+      return false;
+    }
+    if (!validatePhone(values.phone)) {
+      toast.error('Invalid phone number format');
+      return false;
+    }
+    if (!values.gender) {
+      toast.error('Gender is required');
+      return false;
+    }
+    return true;
+  };
+
   const onSubmit = async (values: FormValues) => {
+    if (!validateFormFields(values)) {
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -150,13 +175,27 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
       // Upload photo if selected
       let uploadedPhotoUrl = photoUrl;
       if (photoFile) {
-        uploadedPhotoUrl = await uploadPhoto(photoFile, 'visitor');
+        try {
+          uploadedPhotoUrl = await uploadPhoto(photoFile, 'visitor');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload birthday photo';
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
 
       // Upload anniversary photo if selected
       let uploadedAnniversaryPhotoUrl = anniversaryPhotoUrl;
       if (anniversaryPhotoFile) {
-        uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'visitor');
+        try {
+          uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'visitor');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload anniversary photo';
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
 
       // Convert birth_month and birth_day to numbers
@@ -248,8 +287,8 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error adding visitor:', error);
-      toast.error('Failed to add visitor');
+      const errorMessage = error instanceof Error ? error.message : (editVisitor ? 'Failed to update visitor' : 'Failed to add visitor');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -272,7 +311,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               name="name"
               render={({ field }: { field: ControllerRenderProps<FormValues, 'name'> }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Full Name *</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
@@ -286,7 +325,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                 name="phone"
                 render={({ field }: { field: ControllerRenderProps<FormValues, 'phone'> }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Phone Number *</FormLabel>
                     <FormControl>
                       <Input placeholder="08012345678" {...field} />
                     </FormControl>
@@ -299,7 +338,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
                 name="gender"
                 render={({ field }: { field: ControllerRenderProps<FormValues, 'gender'> }) => (
                   <FormItem>
-                    <FormLabel>Gender</FormLabel>
+                    <FormLabel>Gender *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -498,7 +537,7 @@ export function AddVisitorDialog({ open, onOpenChange, onSuccess, editVisitor }:
               name="address"
               render={({ field }: { field: ControllerRenderProps<FormValues, 'address'> }) => (
                 <FormItem>
-                  <FormLabel>Address </FormLabel>
+                  <FormLabel>Address</FormLabel>
                   <FormControl>
                     <Input placeholder="Home address" {...field} />
                   </FormControl>
