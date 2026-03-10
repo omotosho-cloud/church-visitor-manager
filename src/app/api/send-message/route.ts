@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendSms } from '@/lib/sms';
+import { createMessageLog } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,15 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await sendSms(phone, message);
+    
+    // Log the message
+    await createMessageLog({
+      phone,
+      message,
+      status: result.success ? 'sent' : 'failed',
+      provider_response: result,
+    });
+    
     return NextResponse.json(result);
   } catch (error) {
     console.error('API Error:', error);

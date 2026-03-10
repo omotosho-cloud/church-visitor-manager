@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSettings, getTemplates } from '@/lib/db';
+import { getSettings, getTemplates, createMessageLog } from '@/lib/db';
 import { sendSms } from '@/lib/sms';
 
 export async function POST(request: NextRequest) {
@@ -27,6 +27,16 @@ export async function POST(request: NextRequest) {
       .replace(/\{\{profile_link\}\}/g, profileUrl);
 
     const result = await sendSms(phone, message);
+    
+    // Log the message
+    await createMessageLog({
+      visitor_name: memberName,
+      phone,
+      message,
+      status: result.success ? 'sent' : 'failed',
+      provider: 'member_welcome',
+      provider_response: result,
+    });
     
     return NextResponse.json(result);
   } catch (error) {
