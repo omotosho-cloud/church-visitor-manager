@@ -64,19 +64,46 @@ export default function MemberProfilePage() {
     fetchMember();
   });
 
+  const validateForm = (): string | null => {
+    if (!formData.name.trim()) return 'Full name is required';
+    if (!formData.phone.trim()) return 'Phone number is required';
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     setSaving(true);
 
     try {
       let uploadedPhotoUrl = photoUrl;
       if (photoFile) {
-        uploadedPhotoUrl = await uploadPhoto(photoFile, 'member');
+        try {
+          uploadedPhotoUrl = await uploadPhoto(photoFile, 'member');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload birthday photo';
+          toast.error(errorMessage);
+          setSaving(false);
+          return;
+        }
       }
 
       let uploadedAnniversaryPhotoUrl = anniversaryPhotoUrl;
       if (anniversaryPhotoFile) {
-        uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'member');
+        try {
+          uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'member');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload anniversary photo';
+          toast.error(errorMessage);
+          setSaving(false);
+          return;
+        }
       }
 
       const updateData = {
@@ -100,7 +127,8 @@ export default function MemberProfilePage() {
 
       toast.success('Profile updated successfully!');
     } catch (error) {
-      toast.error('Failed to update profile');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }

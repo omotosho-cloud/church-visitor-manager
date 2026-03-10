@@ -102,11 +102,38 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     }
   }, [editMember, open]);
 
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      toast.error('Full Name is required');
+      return false;
+    }
+    if (!formData.phone.trim()) {
+      toast.error('Phone Number is required');
+      return false;
+    }
+    if (!validatePhone(formData.phone)) {
+      toast.error(MESSAGES.ERROR.INVALID_PHONE);
+      return false;
+    }
+    if (!formData.gender) {
+      toast.error('Gender is required');
+      return false;
+    }
+    if (!formData.category) {
+      toast.error('Category is required');
+      return false;
+    }
+    if (!formData.membership_status) {
+      toast.error('Membership Status is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validatePhone(formData.phone)) {
-      toast.error(MESSAGES.ERROR.INVALID_PHONE);
+    if (!validateForm()) {
       return;
     }
     
@@ -128,13 +155,27 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
       // Upload photo if selected
       let uploadedPhotoUrl = photoUrl;
       if (photoFile) {
-        uploadedPhotoUrl = await uploadPhoto(photoFile, 'member');
+        try {
+          uploadedPhotoUrl = await uploadPhoto(photoFile, 'member');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload birthday photo';
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
 
       // Upload anniversary photo if selected
       let uploadedAnniversaryPhotoUrl = anniversaryPhotoUrl;
       if (anniversaryPhotoFile) {
-        uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'member');
+        try {
+          uploadedAnniversaryPhotoUrl = await uploadPhoto(anniversaryPhotoFile, 'member');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload anniversary photo';
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
 
       const memberData = {
@@ -173,7 +214,8 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      toast.error(editMember ? 'Failed to update member' : 'Failed to add member');
+      const errorMessage = error instanceof Error ? error.message : (editMember ? 'Failed to update member' : 'Failed to add member');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -196,7 +238,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
+                placeholder="Enter full name"
               />
             </div>
             <div className="space-y-2">
@@ -205,7 +247,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
+                placeholder="Enter phone number"
               />
             </div>
           </div>
@@ -218,6 +260,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Enter email"
               />
             </div>
             <div className="space-y-2">
@@ -354,6 +397,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Enter address"
             />
           </div>
 
@@ -392,6 +436,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Enter notes"
             />
           </div>
 
