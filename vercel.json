@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/birthday-reminders",
-      "schedule": "0 9 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/anniversary-reminders",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/process-queue",
-      "schedule": "0 9,17 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
