@@ -56,7 +56,7 @@ export function useFollowUpProcessor() {
         phone: visitor.phone,
         message,
         status: result.success ? 'sent' : 'failed',
-        provider_response: 'results' in result ? result.results : undefined,
+        provider_response: JSON.stringify(result),
       });
 
     } catch (error) {

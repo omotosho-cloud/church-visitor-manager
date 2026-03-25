@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMember, getMembers, getSettings, getTemplates } from '@/lib/db';
+import { createMember, getMembers, getSettings, getTemplates, createMessageLog } from '@/lib/db';
 import { sendSms } from '@/lib/sms';
 
 export async function POST(req: NextRequest) {
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       try {
         const settings = await getSettings();
         
-        if (settings.automation_enabled && settings.member_welcome_enabled) {
+        if (settings.automation_enabled !== false && settings.member_welcome_enabled !== false) {
           const templates = await getTemplates();
           const welcomeTemplate = templates.find(t => t.trigger_type === 'member_welcome');
           
@@ -67,10 +67,11 @@ export async function POST(req: NextRequest) {
             
             const message = welcomeTemplate.message
               .replace(/\{\{name\}\}/g, memberData.name)
-              .replace(/\{\{church_name\}\}/g, settings.church_name)
+              .replace(/\{\{church_name\}\}/g, settings.church_name || 'Our Church')
               .replace(/\{\{profile_link\}\}/g, profileUrl);
 
-            await sendSms(memberData.phone, message);
+            const result = await sendSms(memberData.phone, message);
+            console.log('Member welcome SMS result:', result);
           }
         }
       } catch (error) {

@@ -19,11 +19,25 @@ export const sendSms = async (phone: string, message: string) => {
   }
 
   // Format Nigerian phone number (ensure it starts with 234)
-  let formattedPhone = phone.trim();
+  let formattedPhone = phone.trim().replace(/\s+/g, '');
+  
+  // Remove leading + if present
+  if (formattedPhone.startsWith('+')) {
+    formattedPhone = formattedPhone.slice(1);
+  }
+  
+  // Convert 0 prefix to 234
   if (formattedPhone.startsWith('0')) {
     formattedPhone = '234' + formattedPhone.slice(1);
   } else if (!formattedPhone.startsWith('234')) {
+    // Assume it's missing country code
     formattedPhone = '234' + formattedPhone;
+  }
+  
+  // Validate length (should be 13 digits: 234 + 10 digit number)
+  if (formattedPhone.length !== 13 || !/^\d+$/.test(formattedPhone)) {
+    console.error('Invalid phone format:', phone);
+    return { success: false, message: 'Invalid phone number format' };
   }
 
   const payload: SmsPayload = {
