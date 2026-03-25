@@ -15,14 +15,28 @@ export const sendSms = async (phone: string, message: string) => {
   }
 
   // Format phone number with + prefix
-  let formattedPhone = phone.trim();
-  if (formattedPhone.startsWith('0')) {
-    formattedPhone = '+234' + formattedPhone.slice(1);
-  } else if (formattedPhone.startsWith('234')) {
-    formattedPhone = '+' + formattedPhone;
-  } else if (!formattedPhone.startsWith('+')) {
-    formattedPhone = '+234' + formattedPhone;
+  let formattedPhone = phone.trim().replace(/\s+/g, '');
+  
+  // Remove existing + if present
+  if (formattedPhone.startsWith('+')) {
+    formattedPhone = formattedPhone.slice(1);
   }
+  
+  // Convert 0 prefix to 234
+  if (formattedPhone.startsWith('0')) {
+    formattedPhone = '234' + formattedPhone.slice(1);
+  } else if (!formattedPhone.startsWith('234')) {
+    formattedPhone = '234' + formattedPhone;
+  }
+  
+  // Validate length
+  if (formattedPhone.length !== 13 || !/^\d+$/.test(formattedPhone)) {
+    console.error('Invalid phone format:', phone);
+    return { success: false, message: 'Invalid phone number format' };
+  }
+  
+  // Add + prefix for Twilio
+  formattedPhone = '+' + formattedPhone;
 
   console.log('Sending SMS via Twilio to:', formattedPhone);
 

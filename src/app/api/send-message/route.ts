@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
 
     const result = await sendSms(phone, message);
     
-    // Log the message
+    // Log the message with proper structure
     await createMessageLog({
       phone,
       message,
       status: result.success ? 'sent' : 'failed',
-      provider_response: result,
+      provider_response: JSON.stringify(result),
     });
     
     return NextResponse.json(result);
