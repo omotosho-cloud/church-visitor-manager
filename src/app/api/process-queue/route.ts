@@ -5,9 +5,9 @@ import { sendSms } from '@/lib/sms';
 // This endpoint should be called by a cron service (e.g., Vercel Crons, EasyCron)
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret if provided
+    // Allow internal calls (no auth header) or external cron calls with secret
     const cronSecret = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (cronSecret && process.env.CRON_SECRET && cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

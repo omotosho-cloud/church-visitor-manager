@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Member } from '@/lib/types';
-import { sendSms } from '@/lib/sms';
-import { createMessageLog } from '@/lib/db';
 import { toast } from 'sonner';
 
 interface SendSmsToMembersDialogProps {
@@ -32,39 +30,27 @@ export function SendSmsToMembersDialog({ open, onOpenChange, selectedMembers, on
     let failCount = 0;
 
     try {
-      for (const member of selectedMembers) {
-        try {
-          const result = await sendSms(member.phone, message);
-          
-          await createMessageLog({
-            phone: member.phone,
-            message,
-            status: result.success ? 'sent' : 'failed',
-            provider_response: 'results' in result ? result.results : undefined,
-          });
+      const res = await fetch('/api/send-bulk-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitors: selectedMembers, message }),
+      });
 
-          if (result.success) {
-            successCount++;
-          } else {
-            failCount++;
-          }
-        } catch (error) {
-          failCount++;
-        }
-      }
+      const data = await res.json();
 
-      if (successCount > 0) {
-        toast.success(`SMS sent to ${successCount} member(s)`);
-      }
-      if (failCount > 0) {
-        toast.warning(`Failed to send to ${failCount} member(s)`);
-      }
+      if (!res.ok) throw new Error(data.error);
+
+      successCount = data.successCount;
+      failCount = data.failCount;
+
+      if (successCount > 0) toast.success(`SMS sent to ${successCount} member(s)`);
+      if (failCount > 0) toast.warning(`Failed to send to ${failCount} member(s)`);
 
       onSuccess();
       onOpenChange(false);
       setMessage('');
     } catch (error) {
-      toast.error('Failed to send SMS');
+      toast.error('Failed to send SMS to members');
     } finally {
       setLoading(false);
     }
