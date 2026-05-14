@@ -23,12 +23,10 @@ export async function POST(request: NextRequest) {
         const result = await sendSms(visitor.phone, message);
         
         await createMessageLog({
-          visitor_id: visitor.id,
-          visitor_name: visitor.name,
           phone: visitor.phone,
           message,
           status: result.success ? 'sent' : 'failed',
-          provider_response: result,
+          provider_response: JSON.stringify(result),
         });
 
         if (result.success) {

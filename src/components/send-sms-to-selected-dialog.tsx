@@ -128,11 +128,10 @@ export function SendSmsToSelectedDialog({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={6}
-              maxLength={160}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground text-right">
-              {message.length}/160 characters
+              {message.length} characters
             </p>
           </div>
 
