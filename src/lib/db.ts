@@ -380,6 +380,7 @@ export const promoteVisitorToMember = async (visitorId: string, additionalData: 
 export const getUpcomingBirthdays = async (days: number = 7) => {
   const members = await getMembers();
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const upcoming: Member[] = [];
 
   for (const member of members) {

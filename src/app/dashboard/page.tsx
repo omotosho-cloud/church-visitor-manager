@@ -28,6 +28,7 @@ export default function DashboardPage() {
         
         // Get upcoming anniversaries
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const anniversaries = memberItems.filter(m => {
           if (!m.anniversary_month || !m.anniversary_day) return false;
           const thisYear = today.getFullYear();
