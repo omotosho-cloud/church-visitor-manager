@@ -267,6 +267,7 @@ export const wasReminderSentToday = async (phone: string, messageContains: strin
     .from('message_logs')
     .select('id')
     .eq('phone', phone)
+    .eq('status', 'sent')
     .ilike('message', `%${messageContains}%`)
     .gte('sent_at', todayStart.toISOString())
     .limit(1);

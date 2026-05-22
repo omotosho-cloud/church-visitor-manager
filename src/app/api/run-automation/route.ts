@@ -22,7 +22,8 @@ async function processFollowUpQueue() {
 
         const result = await sendSms(visitor.phone, message);
 
-        await updateQueuedMessage(item.id!, { status: result.success ? 'sent' : 'failed' });
+        // Only mark as failed permanently if sent — keep pending for retry if SMS fails
+        await updateQueuedMessage(item.id!, { status: result.success ? 'sent' : 'pending' });
         await createMessageLog({
           visitor_id: visitor.id,
           visitor_name: visitor.name,
@@ -35,6 +36,7 @@ async function processFollowUpQueue() {
         if (result.success) succeeded++; else failed++;
         processed++;
       } catch (error) {
+        // Data/code error — mark failed so it doesn't loop forever
         console.error('Failed to process queue item:', error);
         try { await updateQueuedMessage(item.id!, { status: 'failed' }); } catch {}
         failed++;
