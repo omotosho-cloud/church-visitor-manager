@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQueuedMessages, updateQueuedMessage, getVisitor, getTemplate, createMessageLog, getMembers, getTemplates } from '@/lib/db';
+import { getQueuedMessages, updateQueuedMessage, getVisitor, getTemplate, createMessageLog, getMembers, getTemplates, wasReminderSentToday } from '@/lib/db';
 import { sendSms } from '@/lib/sms';
 
 const CHURCH_NAME = 'RCCG Victory Centre';
@@ -61,6 +61,9 @@ async function processBirthdaysAndAnniversaries() {
   for (const member of members) {
     if (birthdayTemplate && member.birth_month === currentMonth && member.birth_day === currentDay) {
       try {
+        const alreadySent = await wasReminderSentToday(member.phone, 'HAPPY BIRTHDAY');
+        if (alreadySent) continue;
+
         const message = birthdayTemplate.message
           .replace(/{{name}}/g, member.name)
           .replace(/{{church_name}}/g, CHURCH_NAME);
@@ -79,6 +82,9 @@ async function processBirthdaysAndAnniversaries() {
 
     if (anniversaryTemplate && member.anniversary_month === currentMonth && member.anniversary_day === currentDay) {
       try {
+        const alreadySent = await wasReminderSentToday(member.phone, 'ANNIVERSARY');
+        if (alreadySent) continue;
+
         const message = anniversaryTemplate.message
           .replace(/{{name}}/g, member.name)
           .replace(/{{church_name}}/g, CHURCH_NAME);

@@ -259,6 +259,22 @@ export const uploadPhoto = async (file: File, type: 'visitor' | 'member') => {
   return publicUrl;
 };
 
+export const wasReminderSentToday = async (phone: string, messageContains: string) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from('message_logs')
+    .select('id')
+    .eq('phone', phone)
+    .ilike('message', `%${messageContains}%`)
+    .gte('sent_at', todayStart.toISOString())
+    .limit(1);
+
+  if (error) return false;
+  return (data?.length ?? 0) > 0;
+};
+
 // Members
 export const getMembers = async () => {
   const { data, error } = await supabase
