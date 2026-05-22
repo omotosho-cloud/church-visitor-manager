@@ -9,7 +9,7 @@ export function useFollowUpProcessor() {
     if (processingRef.current) return;
     processingRef.current = true;
     try {
-      await fetch('/api/process-queue', { method: 'POST' });
+      await fetch('/api/run-automation', { method: 'POST' });
     } catch (error) {
       console.error('Queue processor error:', error);
     } finally {

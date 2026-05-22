@@ -59,11 +59,12 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Queue delayed follow-ups
+      // Queue delayed follow-ups — scheduled for 9am on the due day
       const delayTemplates = templates.filter(t => t.trigger_type === 'delay' && t.delay_days);
       for (const t of delayTemplates) {
         const scheduledFor = new Date();
         scheduledFor.setDate(scheduledFor.getDate() + (t.delay_days || 0));
+        scheduledFor.setHours(9, 0, 0, 0);
 
         await createQueuedMessage({
           visitor_id: visitorData.id!,

@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getQueuedMessages, updateQueuedMessage, getVisitor, getTemplate, createMessageLog } from '@/lib/db';
 import { sendSms } from '@/lib/sms';
 
-// This endpoint should be called by a cron service (e.g., Vercel Crons, EasyCron)
-export async function POST(request: NextRequest) {
+async function processQueueHandler(request: NextRequest) {
   try {
-    // Allow internal calls (no auth header) or external cron calls with secret
+    // Allow internal calls (no auth header) or Vercel cron calls with secret
     const cronSecret = request.headers.get('authorization');
     if (cronSecret && process.env.CRON_SECRET && cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,11 +43,8 @@ export async function POST(request: NextRequest) {
             provider_response: JSON.stringify(result),
           });
 
-          if (result.success) {
-            succeeded++;
-          } else {
-            failed++;
-          }
+          if (result.success) succeeded++;
+          else failed++;
           processed++;
         } catch (error) {
           console.error('Failed to process queue item:', error);
@@ -70,9 +66,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Queue processor error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Processor error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Processor error' }, { status: 500 });
   }
+}
+
+// Vercel Cron calls GET, dashboard hook calls POST
+export async function GET(request: NextRequest) {
+  return processQueueHandler(request);
+}
+
+export async function POST(request: NextRequest) {
+  return processQueueHandler(request);
 }

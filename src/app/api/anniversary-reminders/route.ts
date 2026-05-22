@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { getMembers, createMessageLog, getTemplates } from '@/lib/db';
 import { sendSms } from '@/lib/sms';
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   try {
     const members = await getMembers();
