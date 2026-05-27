@@ -49,6 +49,10 @@ async function processFollowUpQueue() {
 }
 
 async function processBirthdaysAndAnniversaries() {
+  const now = new Date();
+  // Only send between 8am UTC (9am WAT) and end of day
+  if (now.getUTCHours() < 8) return { birthdaySent: 0, anniversarySent: 0 };
+
   const members = await getMembers();
   const templates = await getTemplates();
   const today = new Date();
